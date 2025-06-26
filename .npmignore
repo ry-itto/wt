@@ -1,0 +1,25 @@
+# Development files
+src/
+tests/
+example/
+
+# Configuration files
+.eslintrc.json
+jest.config.js
+tsconfig.json
+
+# Documentation (keep README.md)
+CLAUDE.md
+
+# Git and IDE files
+.git/
+.vscode/
+.claude/
+
+# Build tools and cache
+node_modules/
+*.log
+*.tgz
+
+# Local shell integration (users should generate their own)
+wt.zsh

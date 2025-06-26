@@ -103,10 +103,19 @@ wt shell-init
 ```
 
 ### Installation/Setup
-The tool expects to be installed as:
+
+Two installation methods are supported:
+
+**Global Installation (Recommended):**
+```bash
+npm install --global @ry-itto/wt
+wt shell-init > ~/.wt-integration.zsh
+```
+
+**Local Development:**
 - Project directory: `$HOME/.zsh/bin/wt/` (with built JavaScript in `dist/`)
-- Shell integration: Source `wt.zsh` in shell configuration or use `wt shell-init`
 - Build the project: `npm run build` before first use
+- Use `WT_CLI_PATH` environment variable for custom paths
 
 ### Shell Integration
 Two ways to set up shell integration:

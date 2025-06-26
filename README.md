@@ -10,14 +10,31 @@ TypeScript-based git worktree management tool with interactive selection and she
 - 🛠 TypeScript implementation with comprehensive tests
 - 🐚 Self-generating shell integration
 
-## Quick Start
+## Installation
+
+### Global Installation (Recommended)
 
 ```bash
-# Install dependencies and build
-npm install && npm run build
+# Install globally via npm
+npm install --global @ry-itto/wt
 
 # Generate shell integration
 wt shell-init > ~/.wt-integration.zsh
+
+# Add to your shell configuration
+echo "source ~/.wt-integration.zsh" >> ~/.zshrc
+```
+
+### Local Development Setup
+
+```bash
+# Clone and build locally
+git clone <repo-url>
+cd wt
+npm install && npm run build
+
+# Generate shell integration with custom path
+WT_CLI_PATH="$(pwd)/dist/index.js" wt shell-init > ~/.wt-integration.zsh
 
 # Add to your shell configuration
 echo "source ~/.wt-integration.zsh" >> ~/.zshrc

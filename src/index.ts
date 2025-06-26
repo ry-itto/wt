@@ -14,14 +14,20 @@ const options: WtOptions = {
 
 // Get CLI path for shell integration
 const getCliPath = (): string => {
-  // Check if we're running from npm global install
+  // Allow custom path override
   if (process.env.WT_CLI_PATH) {
     return process.env.WT_CLI_PATH;
   }
   
-  // Default to expected ghq path
-  const defaultPath = `${process.env.HOME}/.zsh/bin/wt/dist/index.js`;
-  return defaultPath;
+  // Check if running as global npm package
+  // When installed globally, the script location will be in npm's global bin
+  const scriptPath = process.argv[1];
+  if (scriptPath.includes('/bin/wt') || scriptPath.includes('\\bin\\wt')) {
+    return 'wt'; // Use command name directly for global install
+  }
+  
+  // Default to local development path
+  return `${process.env.HOME}/.zsh/bin/wt/dist/index.js`;
 };
 
 const manager = new WorktreeManager(options);

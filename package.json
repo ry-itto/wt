@@ -1,5 +1,5 @@
 {
-  "name": "wt",
+  "name": "@ry-itto/wt",
   "version": "1.0.0",
   "description": "Git worktree operations wrapper with interactive interface",
   "main": "dist/index.js",
