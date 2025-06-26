@@ -205,6 +205,33 @@ The TypeScript implementation handles directory changes directly through a file-
 
 This approach allows the TypeScript implementation to control directory changes without requiring shell evaluation of commands. The temporary files are process-specific (using PID) to avoid conflicts in concurrent usage.
 
+### CI/CD Pipeline
+
+The project includes comprehensive GitHub Actions workflows:
+
+**CI Workflow (`.github/workflows/ci.yml`):**
+- Multi-platform testing (Ubuntu, macOS)
+- Multi-version Node.js support (18.x, 20.x, 22.x)
+- Type checking, linting, and testing
+- Global installation validation
+- Code coverage reporting with Codecov
+- Security auditing and dependency review
+
+**Release Workflow (`.github/workflows/release.yml`):**
+- Automated npm package publishing on version tags
+- GitHub releases with asset uploads
+- Triggered by `v*` tags (e.g., `v1.0.0`)
+
+**Security Analysis (`.github/workflows/codeql.yml`):**
+- CodeQL static analysis for security vulnerabilities
+- Scheduled weekly scans
+- Pull request analysis
+
+**Dependency Management (`.github/dependabot.yml`):**
+- Automated dependency updates
+- Weekly schedule for npm and GitHub Actions
+- Auto-assignment to maintainer
+
 ### Error Handling
 - Graceful fallback when fzf selections are cancelled
 - Repository detection validates ghq environment structure

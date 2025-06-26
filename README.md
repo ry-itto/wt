@@ -1,5 +1,9 @@
 # wt
 
+[![CI](https://github.com/ry-itto/wt/actions/workflows/ci.yml/badge.svg)](https://github.com/ry-itto/wt/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/ry-itto/wt/actions/workflows/codeql.yml/badge.svg)](https://github.com/ry-itto/wt/actions/workflows/codeql.yml)
+[![npm version](https://badge.fury.io/js/@ry-itto%2Fwt.svg)](https://badge.fury.io/js/@ry-itto%2Fwt)
+
 TypeScript-based git worktree management tool with interactive selection and shell integration.
 
 ## Features
