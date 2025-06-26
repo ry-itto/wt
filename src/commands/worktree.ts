@@ -1,4 +1,6 @@
 import { basename, join } from 'path';
+import { writeFileSync, mkdirSync } from 'fs';
+import { tmpdir } from 'os';
 import { GitUtils } from '../utils/git.js';
 import { HookManager } from '../utils/hooks.js';
 import { InteractiveSelector } from '../utils/interactive.js';
@@ -7,6 +9,22 @@ import chalk from 'chalk';
 
 export class WorktreeManager {
   constructor(private options: WtOptions = {}) {}
+
+  private getWtTmpDir(): string {
+    const wtTmpDir = join(tmpdir(), 'wt');
+    try {
+      mkdirSync(wtTmpDir, { recursive: true });
+    } catch {
+      // Directory already exists
+    }
+    return wtTmpDir;
+  }
+
+  private writeCdPath(path: string): void {
+    const cdFile = join(this.getWtTmpDir(), `cd-${process.pid}.tmp`);
+    writeFileSync(cdFile, path);
+    console.log(`WT_CD_FILE=${cdFile}`);
+  }
   
   async listWorktrees(): Promise<void> {
     const repo = GitUtils.getCurrentRepo();
@@ -135,17 +153,19 @@ export class WorktreeManager {
   async changeDirectory(): Promise<void> {
     const selectedPath = await this.selectWorktree('cd');
     if (selectedPath) {
-      // For shell integration, output the cd command
-      console.log(`cd '${selectedPath}'`);
+      this.writeCdPath(selectedPath);
     }
   }
   
   async defaultAction(): Promise<void> {
     const selectedPath = await this.selectWorktree('cd');
     if (selectedPath) {
-      // Output path for shell wrapper
-      console.log(selectedPath);
+      this.writeCdPath(selectedPath);
     }
+  }
+
+  async selectForShell(): Promise<string | null> {
+    return await this.selectWorktree('cd');
   }
   
   async executeInWorktree(command: string[]): Promise<void> {

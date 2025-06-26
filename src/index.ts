@@ -12,6 +12,18 @@ const options: WtOptions = {
   worktreeDir: process.env.WT_WORKTREE_DIR
 };
 
+// Get CLI path for shell integration
+const getCliPath = (): string => {
+  // Check if we're running from npm global install
+  if (process.env.WT_CLI_PATH) {
+    return process.env.WT_CLI_PATH;
+  }
+  
+  // Default to expected ghq path
+  const defaultPath = `${process.env.HOME}/.zsh/bin/wt/dist/index.js`;
+  return defaultPath;
+};
+
 const manager = new WorktreeManager(options);
 
 program
@@ -48,6 +60,50 @@ program
     await manager.changeDirectory();
   });
 
+program
+  .command('select')
+  .description('Select worktree and output path for shell integration')
+  .action(async () => {
+    await manager.defaultAction();
+  });
+
+program
+  .command('shell-init')
+  .description('Output shell integration function')
+  .action(() => {
+    const cliPath = getCliPath();
+    console.log(`# wt shell integration
+wt() {
+  if [ $# -eq 0 ]; then
+    local output=$(node "${cliPath}")
+    if [[ "$output" =~ ^WT_CD_FILE=(.+)$ ]]; then
+      local cd_file="\${BASH_REMATCH[1]}"
+      if [ -f "$cd_file" ]; then
+        local target_dir=$(cat "$cd_file")
+        rm -f "$cd_file"
+        if [ -d "$target_dir" ]; then
+          cd "$target_dir"
+        fi
+      fi
+    fi
+  elif [ "$1" = "cd" ]; then
+    local output=$(node "${cliPath}" cd)
+    if [[ "$output" =~ ^WT_CD_FILE=(.+)$ ]]; then
+      local cd_file="\${BASH_REMATCH[1]}"
+      if [ -f "$cd_file" ]; then
+        local target_dir=$(cat "$cd_file")
+        rm -f "$cd_file"
+        if [ -d "$target_dir" ]; then
+          cd "$target_dir"
+        fi
+      fi
+    fi
+  else
+    node "${cliPath}" "$@"
+  fi
+}`);
+  });
+
 async function main() {
   // Handle "wt --" pattern
   const dashDashIndex = process.argv.indexOf('--');
@@ -69,6 +125,7 @@ async function main() {
     console.log(program.version());
     process.exit(0);
   }
+
 
   // Parse arguments but don't exit on unknown commands
   program.exitOverride((err) => {

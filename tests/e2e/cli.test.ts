@@ -17,6 +17,7 @@ describe('CLI E2E Tests', () => {
       expect(result.stdout).toContain('list');
       expect(result.stdout).toContain('add');
       expect(result.stdout).toContain('remove');
+      expect(result.stdout).toContain('shell-init');
     });
   });
 
@@ -35,6 +36,18 @@ describe('CLI E2E Tests', () => {
       
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("missing required argument 'branch'");
+    });
+  });
+
+  describe('shell-init command', () => {
+    it('should output shell integration function', async () => {
+      const result = await E2ETestHelper.runCommand('node', [cliPath, 'shell-init']);
+      
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('# wt shell integration');
+      expect(result.stdout).toContain('wt() {');
+      expect(result.stdout).toContain('--shell-select');
+      expect(result.stdout).toContain('--shell-cd');
     });
   });
 });

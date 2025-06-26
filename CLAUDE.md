@@ -97,16 +97,27 @@ wt -- <command>
 
 # Pass selected worktree as argument to command
 wt <command>
+
+# Generate shell integration function
+wt shell-init
 ```
 
 ### Installation/Setup
 The tool expects to be installed as:
 - Project directory: `$HOME/.zsh/bin/wt/` (with built JavaScript in `dist/`)
-- Shell integration: Source `wt.zsh` in shell configuration
+- Shell integration: Source `wt.zsh` in shell configuration or use `wt shell-init`
 - Build the project: `npm run build` before first use
+
+### Shell Integration
+Two ways to set up shell integration:
+1. **Static**: Source the provided `wt.zsh` file
+2. **Dynamic**: Run `wt shell-init > ~/.wt-integration.zsh` and source that file
+
+The CLI can generate its own shell integration function with correct paths.
 
 ### Environment Variables
 - **`WT_WORKTREE_DIR`** - Custom base directory for worktree creation (optional)
+- **`WT_CLI_PATH`** - Custom path to CLI executable for shell integration (optional)
 
 ## Development Notes
 
@@ -171,6 +182,19 @@ The project includes comprehensive test coverage:
 - Unit tests cover utility functions and core logic (primary focus)
 - Integration tests cover basic CLI functionality
 - Run `npm run test:coverage` for detailed coverage report
+
+### Directory Change Mechanism
+
+The TypeScript implementation handles directory changes directly through a file-based communication mechanism:
+
+1. **Selection**: User selects a worktree through interactive fzf interface
+2. **File Writing**: TypeScript writes the selected path to a temporary file in `/tmp/wt/cd-{PID}.tmp`
+3. **Output Format**: Outputs `WT_CD_FILE=/path/to/temp/file` to stdout
+4. **Shell Processing**: Shell wrapper uses regex to detect this pattern: `^WT_CD_FILE=(.+)$`
+5. **Directory Change**: Shell reads the file content and executes `cd "$target_dir"`
+6. **Cleanup**: Temporary file is automatically removed after use
+
+This approach allows the TypeScript implementation to control directory changes without requiring shell evaluation of commands. The temporary files are process-specific (using PID) to avoid conflicts in concurrent usage.
 
 ### Error Handling
 - Graceful fallback when fzf selections are cancelled
