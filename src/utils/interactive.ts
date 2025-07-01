@@ -1,4 +1,5 @@
 import { spawn } from 'child_process';
+import * as readline from 'readline';
 import { WorktreeInfo } from '../types.js';
 import chalk from 'chalk';
 
@@ -63,6 +64,7 @@ export class InteractiveSelector {
       fzf.on('close', (code) => {
         if (code === 0) {
           // Remove ANSI color codes from output
+          // eslint-disable-next-line no-control-regex
           const cleanOutput = output.trim().replace(/\x1b\[[0-9;]*m/g, '');
           resolve(cleanOutput || null);
         } else if (code === 130) {
@@ -89,7 +91,6 @@ export class InteractiveSelector {
   
   static async confirmAction(message: string): Promise<boolean> {
     return new Promise((resolve) => {
-      const readline = require('readline');
       const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout

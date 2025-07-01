@@ -182,8 +182,8 @@ async function main() {
 
   try {
     program.parse();
-  } catch (err: any) {
-    if (err.code === 'commander.unknownCommand') {
+  } catch (err: unknown) {
+    if (err instanceof Error && 'code' in err && err.code === 'commander.unknownCommand') {
       // Handle "wt <command>" pattern - pass worktree as argument to command
       const args = process.argv.slice(2);
       if (args.length > 0) {
@@ -193,7 +193,7 @@ async function main() {
         await manager.defaultAction();
       }
     } else {
-      console.error(chalk.red(err.message));
+      console.error(chalk.red(err instanceof Error ? err.message : String(err)));
       process.exit(1);
     }
   }
