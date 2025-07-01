@@ -46,8 +46,9 @@ describe('CLI E2E Tests', () => {
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('# wt shell integration');
       expect(result.stdout).toContain('wt() {');
-      expect(result.stdout).toContain('--shell-select');
-      expect(result.stdout).toContain('--shell-cd');
+      expect(result.stdout).toContain('WT_SWITCH_FILE');
+      expect(result.stdout).toContain('switch_file="/tmp/wt_switch_$$"');
+      expect(result.stdout).toContain('WT_CD:');
     });
   });
 });
