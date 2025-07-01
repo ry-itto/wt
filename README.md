@@ -10,7 +10,7 @@ TypeScript-based git worktree management tool with interactive selection and she
 
 - 🚀 Interactive worktree selection with fzf
 - 📁 Smart directory navigation with automatic cd
-- 🔄 Pre/post operation hooks
+- 🪝 Pre/post operation hooks (global and repository-specific)
 - 🛠 TypeScript implementation with comprehensive tests
 - 🐚 Self-generating shell integration
 - 🔄 Robust directory change mechanism (inspired by git-workers)
@@ -102,6 +102,80 @@ source wt.zsh
 
 - `WT_CLI_PATH`: Custom path to the wt executable (for local development)
 - `WT_WORKTREE_DIR`: Custom base directory for worktree creation
+
+## Hook System
+
+`wt` supports a hook system for automating tasks during worktree operations, similar to Git hooks.
+
+### Hook Types
+
+- **pre-add**: Executed before creating a worktree
+- **post-add**: Executed after creating a worktree
+
+### Hook Locations
+
+**Global hooks** (affect all repositories):
+- `~/.zsh/hooks/wt/pre-add`
+- `~/.zsh/hooks/wt/post-add`
+
+**Repository-specific hooks** (affect single repository):
+- `<repo>/.wt/hooks/pre-add`
+- `<repo>/.wt/hooks/post-add`
+
+### Setup
+
+1. Create hook directories:
+```bash
+# Global hooks
+mkdir -p ~/.zsh/hooks/wt
+
+# Repository-specific hooks
+mkdir -p /path/to/repo/.wt/hooks
+```
+
+2. Create hook scripts:
+```bash
+# Example: Auto-install dependencies after worktree creation
+cat > ~/.zsh/hooks/wt/post-add << 'EOF'
+#!/bin/zsh
+# $1: branch name, $2: worktree path, $3: repo path, $4: success flag
+
+if [[ "$4" == "true" && -f "$2/package.json" ]]; then
+    echo "Installing dependencies in new worktree..."
+    (cd "$2" && npm install)
+fi
+EOF
+
+chmod +x ~/.zsh/hooks/wt/post-add
+```
+
+### Hook Arguments
+
+**pre-add hooks receive**:
+- `$1`: Branch name
+- `$2`: Worktree path
+- `$3`: Repository path
+
+**post-add hooks receive**:
+- `$1`: Branch name
+- `$2`: Worktree path  
+- `$3`: Repository path
+- `$4`: Success flag ("true" or "false")
+
+### Execution Order
+
+1. Global pre-add hook
+2. Repository-specific pre-add hook
+3. Worktree creation
+4. Global post-add hook
+5. Repository-specific post-add hook
+
+### Example Hooks
+
+See [`example/hooks/wt/`](example/hooks/wt/) for example hook scripts including:
+- Dependency installation
+- Branch naming validation
+- IDE integration
 
 ## Development
 
