@@ -189,3 +189,14 @@ npm run test:watch
 # Build
 npm run build
 ```
+
+### Automated Dependency Management
+
+This project uses [Dependabot](https://docs.github.com/en/code-security/dependabot) for automated dependency updates:
+
+- **Automatic Updates**: Weekly updates for npm packages and GitHub Actions
+- **Auto-merge**: Patch and minor version updates are automatically merged after CI passes
+- **Manual Review**: Major version updates require manual review due to potential breaking changes
+- **No Assignees**: Dependabot PRs don't assign reviewers to reduce notification noise
+
+Dependabot configuration can be found in [`.github/dependabot.yml`](.github/dependabot.yml).
