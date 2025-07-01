@@ -21,9 +21,22 @@ export class WorktreeManager {
   }
 
   private writeCdPath(path: string): void {
-    const cdFile = join(this.getWtTmpDir(), `cd-${process.pid}.tmp`);
-    writeFileSync(cdFile, path);
-    console.log(`WT_CD_FILE=${cdFile}`);
+    // Check for WT_SWITCH_FILE environment variable (like git-workers)
+    const switchFile = process.env.WT_SWITCH_FILE;
+    
+    if (switchFile) {
+      // Primary method: write to file specified by shell
+      try {
+        writeFileSync(switchFile, path);
+      } catch (error) {
+        console.error(`Warning: Failed to write switch file: ${error}`);
+        // Fallback to stdout marker
+        console.log(`WT_CD:${path}`);
+      }
+    } else {
+      // Fallback method: stdout marker for parsing by shell
+      console.log(`WT_CD:${path}`);
+    }
   }
   
   async listWorktrees(): Promise<void> {

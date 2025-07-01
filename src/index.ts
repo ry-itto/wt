@@ -22,6 +22,7 @@ const getCliPath = (): string => {
   // Check if running as global npm package
   // When installed globally, the script location will be in npm's global bin
   const scriptPath = process.argv[1];
+  
   if (scriptPath && (scriptPath.includes('/bin/wt') || scriptPath.includes('\\bin\\wt') || 
       scriptPath.includes('/.n/lib/node_modules') || scriptPath.includes('/.npm/') ||
       scriptPath.includes('/npm/') || scriptPath.includes('/node_modules/.bin/') ||
@@ -90,42 +91,57 @@ program
     
     console.log(`# wt shell integration
 wt() {
+  # Create temp file for directory switching (like git-workers)
+  local switch_file="/tmp/wt_switch_$$"
+  
   if [ $# -eq 0 ]; then
-    local output=$(${command} 2>/dev/null)
-    if [[ "$output" =~ WT_CD_FILE=(.+) ]]; then
-      local cd_file="\${BASH_REMATCH[1]}"
-      if [ -f "$cd_file" ]; then
-        local target_dir=$(cat "$cd_file")
-        rm -f "$cd_file"
-        if [ -d "$target_dir" ]; then
-          cd "$target_dir"
-        else
-          echo "Directory not found: $target_dir" >&2
-        fi
-      else
-        echo "CD file not found: $cd_file" >&2
+    # Run wt with switch file environment variable
+    local output=$(WT_SWITCH_FILE="$switch_file" ${command})
+    local exit_code=$?
+    
+    # Check for directory switch
+    if [[ -f "$switch_file" ]]; then
+      local new_dir=$(cat "$switch_file" 2>/dev/null)
+      rm -f "$switch_file"
+      if [[ -n "$new_dir" && -d "$new_dir" ]]; then
+        cd "$new_dir"
+      fi
+    elif [[ "$output" =~ WT_CD:(.+) ]]; then
+      # Fallback: check for stdout marker
+      local new_dir="\${BASH_REMATCH[1]}"
+      if [[ -n "$new_dir" && -d "$new_dir" ]]; then
+        cd "$new_dir"
       fi
     else
+      # Show output if no directory change
       echo "$output"
     fi
+    
+    return $exit_code
   elif [ "$1" = "cd" ]; then
-    local output=$(${command} cd 2>/dev/null)
-    if [[ "$output" =~ WT_CD_FILE=(.+) ]]; then
-      local cd_file="\${BASH_REMATCH[1]}"
-      if [ -f "$cd_file" ]; then
-        local target_dir=$(cat "$cd_file")
-        rm -f "$cd_file"
-        if [ -d "$target_dir" ]; then
-          cd "$target_dir"
-        else
-          echo "Directory not found: $target_dir" >&2
-        fi
-      else
-        echo "CD file not found: $cd_file" >&2
+    # Run wt cd with switch file environment variable
+    local output=$(WT_SWITCH_FILE="$switch_file" ${command} cd)
+    local exit_code=$?
+    
+    # Check for directory switch
+    if [[ -f "$switch_file" ]]; then
+      local new_dir=$(cat "$switch_file" 2>/dev/null)
+      rm -f "$switch_file"
+      if [[ -n "$new_dir" && -d "$new_dir" ]]; then
+        cd "$new_dir"
+      fi
+    elif [[ "$output" =~ WT_CD:(.+) ]]; then
+      # Fallback: check for stdout marker
+      local new_dir="\${BASH_REMATCH[1]}"
+      if [[ -n "$new_dir" && -d "$new_dir" ]]; then
+        cd "$new_dir"
       fi
     else
+      # Show output if no directory change
       echo "$output"
     fi
+    
+    return $exit_code
   else
     ${command} "$@"
   fi
