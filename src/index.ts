@@ -22,7 +22,10 @@ const getCliPath = (): string => {
   // Check if running as global npm package
   // When installed globally, the script location will be in npm's global bin
   const scriptPath = process.argv[1];
-  if (scriptPath.includes('/bin/wt') || scriptPath.includes('\\bin\\wt')) {
+  if (scriptPath && (scriptPath.includes('/bin/wt') || scriptPath.includes('\\bin\\wt') || 
+      scriptPath.includes('/.n/lib/node_modules') || scriptPath.includes('/.npm/') ||
+      scriptPath.includes('/npm/') || scriptPath.includes('/node_modules/.bin/') ||
+      scriptPath.includes('node_modules/@ry-itto/wt'))) {
     return 'wt'; // Use command name directly for global install
   }
   
@@ -35,7 +38,11 @@ const manager = new WorktreeManager(options);
 program
   .name('wt')
   .description('Git worktree operations wrapper with interactive interface')
-  .version('1.0.0');
+  .version('1.0.0')
+  .action(async () => {
+    // Default action when no subcommand is provided
+    await manager.defaultAction();
+  });
 
 program
   .command('list')
@@ -78,34 +85,49 @@ program
   .description('Output shell integration function')
   .action(() => {
     const cliPath = getCliPath();
+    const isGlobal = cliPath === 'wt';
+    const command = isGlobal ? 'command wt' : `node "${cliPath}"`;
+    
     console.log(`# wt shell integration
 wt() {
   if [ $# -eq 0 ]; then
-    local output=$(node "${cliPath}")
-    if [[ "$output" =~ ^WT_CD_FILE=(.+)$ ]]; then
+    local output=$(${command} 2>/dev/null)
+    if [[ "$output" =~ WT_CD_FILE=(.+) ]]; then
       local cd_file="\${BASH_REMATCH[1]}"
       if [ -f "$cd_file" ]; then
         local target_dir=$(cat "$cd_file")
         rm -f "$cd_file"
         if [ -d "$target_dir" ]; then
           cd "$target_dir"
+        else
+          echo "Directory not found: $target_dir" >&2
         fi
+      else
+        echo "CD file not found: $cd_file" >&2
       fi
+    else
+      echo "$output"
     fi
   elif [ "$1" = "cd" ]; then
-    local output=$(node "${cliPath}" cd)
-    if [[ "$output" =~ ^WT_CD_FILE=(.+)$ ]]; then
+    local output=$(${command} cd 2>/dev/null)
+    if [[ "$output" =~ WT_CD_FILE=(.+) ]]; then
       local cd_file="\${BASH_REMATCH[1]}"
       if [ -f "$cd_file" ]; then
         local target_dir=$(cat "$cd_file")
         rm -f "$cd_file"
         if [ -d "$target_dir" ]; then
           cd "$target_dir"
+        else
+          echo "Directory not found: $target_dir" >&2
         fi
+      else
+        echo "CD file not found: $cd_file" >&2
       fi
+    else
+      echo "$output"
     fi
   else
-    node "${cliPath}" "$@"
+    ${command} "$@"
   fi
 }`);
   });
@@ -158,11 +180,6 @@ async function main() {
       console.error(chalk.red(err.message));
       process.exit(1);
     }
-  }
-
-  // If no command provided, run default action
-  if (process.argv.length === 2) {
-    await manager.defaultAction();
   }
 }
 
