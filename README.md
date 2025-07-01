@@ -39,8 +39,8 @@ git clone <repo-url>
 cd wt
 npm install && npm run build
 
-# Generate shell integration with custom path
-WT_CLI_PATH="$(pwd)/dist/index.js" wt shell-init > ~/.wt-integration.zsh
+# Generate shell integration
+node dist/index.js shell-init > ~/.wt-integration.zsh
 
 # Add to your shell configuration
 echo "source ~/.wt-integration.zsh" >> ~/.zshrc
@@ -52,7 +52,7 @@ echo "source ~/.wt-integration.zsh" >> ~/.zshrc
 # Interactive worktree selection and navigation (auto-cd)
 wt
 
-# Explicit directory change to selected worktree
+# Explicit directory change to selected worktree  
 wt cd
 
 # List worktrees in current repository
@@ -94,7 +94,7 @@ eval "$(wt shell-init)"
 wt shell-init > ~/.wt-integration.zsh
 source ~/.wt-integration.zsh
 
-# Or use the provided static file (deprecated)
+# Or use the provided static file
 source wt.zsh
 ```
 
