@@ -1,6 +1,6 @@
 {
   "name": "@ry-itto/wt",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Git worktree operations wrapper with interactive interface",
   "main": "dist/index.js",
   "type": "module",
@@ -21,7 +21,13 @@
     "test:coverage": "jest --coverage tests/unit",
     "prepare": "npm run build"
   },
-  "keywords": ["git", "worktree", "cli", "fzf", "ghq"],
+  "keywords": [
+    "git",
+    "worktree",
+    "cli",
+    "fzf",
+    "ghq"
+  ],
   "author": "Ryoya Ito",
   "license": "MIT",
   "repository": {
