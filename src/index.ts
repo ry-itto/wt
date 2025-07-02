@@ -53,9 +53,9 @@ program
   });
 
 program
-  .command('add <branch> [path]')
-  .description('Add a new worktree in current repository')
-  .action(async (branch: string, path?: string) => {
+  .command('add [branch] [path]')
+  .description('Add a new worktree (interactive branch selection if no branch specified)')
+  .action(async (branch?: string, path?: string) => {
     await manager.addWorktree(branch, path);
   });
 

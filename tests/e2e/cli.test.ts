@@ -30,12 +30,12 @@ describe('CLI E2E Tests', () => {
     });
   });
 
-  describe('add command - validation', () => {
-    it('should show error when branch name is missing', async () => {
-      const result = await E2ETestHelper.runCommand('node', [cliPath, 'add']);
+  describe('add command', () => {
+    it('should show help when unknown branch flag is used', async () => {
+      const result = await E2ETestHelper.runCommand('node', [cliPath, 'add', '--invalid-flag']);
       
       expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain("missing required argument 'branch'");
+      expect(result.stderr).toContain("unknown option");
     });
   });
 

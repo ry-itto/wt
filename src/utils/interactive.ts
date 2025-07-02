@@ -1,6 +1,6 @@
 import { spawn } from 'child_process';
 import * as readline from 'readline';
-import { WorktreeInfo } from '../types.js';
+import { WorktreeInfo, BranchInfo, BranchType } from '../types.js';
 import chalk from 'chalk';
 
 export class InteractiveSelector {
@@ -41,6 +41,59 @@ export class InteractiveSelector {
     }
     
     return this.selectWorktree(removableWorktrees, 'Select worktree to remove: ');
+  }
+  
+  static async selectBranch(branches: BranchInfo[], prompt: string = 'Select branch: '): Promise<BranchInfo | null> {
+    if (branches.length === 0) {
+      console.log(chalk.yellow('No branches found'));
+      return null;
+    }
+    
+    // Prepare branch list for fzf
+    const branchList = branches.map(branch => {
+      const typeColor = branch.type === BranchType.Local ? chalk.green : chalk.blue;
+      const typeLabel = `[${typeColor(branch.type)}]`;
+      
+      let usageInfo = '';
+      if (branch.inUse && branch.worktreePath) {
+        usageInfo = chalk.gray(` (in use: ${branch.worktreePath})`);
+      }
+      
+      const remotePart = branch.remoteName ? chalk.gray(` ${branch.remoteName}/`) : '';
+      
+      return `${remotePart}${branch.name} ${typeLabel}${usageInfo}`;
+    }).join('\n');
+    
+    try {
+      const selectedLine = await this.runFzf(branchList, prompt);
+      if (!selectedLine) {
+        return null;
+      }
+      
+      // Extract branch name from selected line
+      // The branch name is after the remote part (if any) and before the type label
+      // eslint-disable-next-line no-control-regex
+      const cleanLine = selectedLine.replace(/\x1b\[[0-9;]*m/g, ''); // Remove ANSI codes
+      let branchName: string;
+      
+      if (cleanLine.includes('/')) {
+        // Remote branch: "origin/branch-name [remote]"
+        const parts = cleanLine.split(' ');
+        const fullName = parts[0];
+        branchName = fullName.split('/').slice(1).join('/');
+      } else {
+        // Local branch: "branch-name [local]"
+        branchName = cleanLine.split(' ')[0];
+      }
+      
+      // Find the selected branch in the original list
+      const selectedBranch = branches.find(b => b.name === branchName);
+      return selectedBranch || null;
+      
+    } catch (error) {
+      console.error(chalk.red('Error running fzf:', error));
+      return null;
+    }
   }
   
   private static async runFzf(input: string, prompt: string): Promise<string | null> {

@@ -5,6 +5,20 @@ export interface WorktreeInfo {
   isMain: boolean;
 }
 
+export interface BranchInfo {
+  name: string;
+  type: BranchType;
+  inUse: boolean;
+  worktreePath?: string;
+  isRemote: boolean;
+  remoteName?: string;
+}
+
+export enum BranchType {
+  Local = 'local',
+  Remote = 'remote'
+}
+
 export interface HookContext {
   branchName: string;
   worktreePath: string;

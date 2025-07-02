@@ -58,7 +58,10 @@ wt cd
 # List worktrees in current repository
 wt list
 
-# Create new worktree
+# Create new worktree (interactive branch selection)
+wt add
+
+# Create new worktree with specific branch
 wt add feature-branch [optional-path]
 
 # Remove worktree with interactive selection

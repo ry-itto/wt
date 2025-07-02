@@ -60,17 +60,49 @@ export class WorktreeManager {
     });
   }
   
-  async addWorktree(branch: string, path?: string): Promise<void> {
-    if (!branch) {
-      console.error(chalk.red('Error: Branch name is required'));
-      console.log('Usage: wt add <branch> [path]');
-      process.exit(1);
-    }
-    
+  async addWorktree(branch?: string, path?: string): Promise<void> {
     const repo = GitUtils.getCurrentRepo();
     if (!repo) {
       console.error(chalk.red('Error: Not in a git repository'));
       process.exit(1);
+    }
+
+    let selectedBranch: string;
+    
+    if (!branch) {
+      // Interactive branch selection mode
+      const branches = GitUtils.listBranches(repo.path);
+      if (branches.length === 0) {
+        console.error(chalk.red('No branches found'));
+        process.exit(1);
+      }
+      
+      console.log(chalk.blue('Select a branch to create worktree:'));
+      const selectedBranchInfo = await InteractiveSelector.selectBranch(branches, 'Select branch: ');
+      
+      if (!selectedBranchInfo) {
+        console.log(chalk.yellow('Operation cancelled'));
+        return;
+      }
+      
+      // Warn if branch is already in use
+      if (selectedBranchInfo.inUse) {
+        console.log(chalk.yellow(`⚠️  Branch '${selectedBranchInfo.name}' is already in use at: ${selectedBranchInfo.worktreePath}`));
+        const confirmed = await InteractiveSelector.confirmAction('Do you want to create another worktree for this branch?');
+        if (!confirmed) {
+          console.log(chalk.yellow('Operation cancelled'));
+          return;
+        }
+      }
+      
+      selectedBranch = selectedBranchInfo.name;
+      
+      // For remote branches, we'll checkout a local tracking branch
+      if (selectedBranchInfo.type === 'remote' && selectedBranchInfo.remoteName) {
+        console.log(chalk.blue(`Creating local tracking branch for ${selectedBranchInfo.remoteName}/${selectedBranchInfo.name}`));
+      }
+    } else {
+      selectedBranch = branch;
     }
     
     console.log(chalk.blue(`Using current repository: ${repo.path}`));
@@ -82,27 +114,27 @@ export class WorktreeManager {
     } else {
       const repoName = basename(repo.path);
       if (this.options.worktreeDir) {
-        worktreePath = join(this.options.worktreeDir, `${repoName}-${branch}`);
+        worktreePath = join(this.options.worktreeDir, `${repoName}-${selectedBranch}`);
       } else {
-        worktreePath = `${repo.path}-${branch}`;
+        worktreePath = `${repo.path}-${selectedBranch}`;
       }
     }
     
-    console.log(chalk.yellow(`Creating worktree for branch '${branch}' at '${worktreePath}'`));
+    console.log(chalk.yellow(`Creating worktree for branch '${selectedBranch}' at '${worktreePath}'`));
     
     // Execute pre-hooks
     await HookManager.executePreAddHooks({
-      branchName: branch,
+      branchName: selectedBranch,
       worktreePath,
       repoPath: repo.path
     });
     
     // Create worktree
-    const success = await GitUtils.addWorktree(repo.path, branch, worktreePath);
+    const success = await GitUtils.addWorktree(repo.path, selectedBranch, worktreePath);
     
     // Execute post-hooks
     await HookManager.executePostAddHooks({
-      branchName: branch,
+      branchName: selectedBranch,
       worktreePath,
       repoPath: repo.path,
       success
