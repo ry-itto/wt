@@ -3,10 +3,28 @@ import * as readline from 'readline';
 import { WorktreeInfo, BranchInfo, BranchType } from '../types.js';
 import chalk from 'chalk';
 
+function isInteractiveEnvironment(): boolean {
+  // Allow interactive selection in unit test environment
+  if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID) {
+    return true;
+  }
+  // For E2E tests or CI environments, check TTY and CI flags
+  // If we're in CI or have no TTY, it's not interactive
+  if (process.env.CI || !process.stdout.isTTY || !process.stdin.isTTY) {
+    return false;
+  }
+  return true;
+}
+
 export class InteractiveSelector {
   static async selectWorktree(worktrees: WorktreeInfo[], prompt: string = 'Select worktree: '): Promise<string | null> {
     if (worktrees.length === 0) {
       console.log(chalk.yellow('No worktrees found'));
+      return null;
+    }
+    
+    if (!isInteractiveEnvironment()) {
+      console.error(chalk.red('Error: Interactive selection not available in non-interactive environment'));
       return null;
     }
     
@@ -49,6 +67,11 @@ export class InteractiveSelector {
       return null;
     }
     
+    if (!isInteractiveEnvironment()) {
+      console.error(chalk.red('Error: Interactive selection not available in non-interactive environment'));
+      return null;
+    }
+    
     // Prepare branch list for fzf with mapping
     const branchDisplayLines: string[] = [];
     const branchMap = new Map<string, BranchInfo>();
@@ -62,8 +85,14 @@ export class InteractiveSelector {
         usageInfo = chalk.gray(` (in use: ${branch.worktreePath})`);
       }
       
+      let prInfo = '';
+      if (branch.hasPullRequest && branch.prNumber) {
+        const prTitle = branch.prTitle ? ` - ${branch.prTitle}` : '';
+        prInfo = chalk.magenta(` [PR #${branch.prNumber}${prTitle}]`);
+      }
+      
       const remotePart = branch.remoteName ? chalk.gray(` ${branch.remoteName}/`) : '';
-      const displayLine = `${remotePart}${branch.name} ${typeLabel}${usageInfo}`;
+      const displayLine = `${remotePart}${branch.name} ${typeLabel}${prInfo}${usageInfo}`;
       
       branchDisplayLines.push(displayLine);
       

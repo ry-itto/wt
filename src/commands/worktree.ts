@@ -60,7 +60,7 @@ export class WorktreeManager {
     });
   }
   
-  async addWorktree(branch?: string, path?: string): Promise<void> {
+  async addWorktree(branch?: string, path?: string, prOnly?: boolean): Promise<void> {
     const repo = GitUtils.getCurrentRepo();
     if (!repo) {
       console.error(chalk.red('Error: Not in a git repository'));
@@ -71,9 +71,10 @@ export class WorktreeManager {
     
     if (!branch) {
       // Interactive branch selection mode
-      const branches = GitUtils.listBranches(repo.path);
+      const branches = await GitUtils.listBranches(repo.path, prOnly);
       if (branches.length === 0) {
-        console.error(chalk.red('No branches found'));
+        const message = prOnly ? 'No branches with pull requests found' : 'No branches found';
+        console.error(chalk.red(message));
         process.exit(1);
       }
       
@@ -81,8 +82,8 @@ export class WorktreeManager {
       const selectedBranchInfo = await InteractiveSelector.selectBranch(branches, 'Select branch: ');
       
       if (!selectedBranchInfo) {
-        console.log(chalk.yellow('Operation cancelled'));
-        return;
+        console.error(chalk.red('Error: Branch selection failed'));
+        process.exit(1);
       }
       
       // Warn if branch is already in use

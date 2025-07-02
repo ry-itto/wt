@@ -12,6 +12,9 @@ export interface BranchInfo {
   worktreePath?: string;
   isRemote: boolean;
   remoteName?: string;
+  hasPullRequest?: boolean;
+  prNumber?: number;
+  prTitle?: string;
 }
 
 export enum BranchType {
@@ -35,4 +38,5 @@ export interface GitRepository {
 
 export interface WtOptions {
   worktreeDir?: string;
+  prOnly?: boolean;
 }

@@ -55,8 +55,9 @@ program
 program
   .command('add [branch] [path]')
   .description('Add a new worktree (interactive branch selection if no branch specified)')
-  .action(async (branch?: string, path?: string) => {
-    await manager.addWorktree(branch, path);
+  .option('--pr-only', 'Show only branches with open pull requests')
+  .action(async (branch?: string, path?: string, options?: { prOnly?: boolean }) => {
+    await manager.addWorktree(branch, path, options?.prOnly);
   });
 
 program

@@ -2,6 +2,7 @@ import { execSync, spawn } from 'child_process';
 import { existsSync } from 'fs';
 import { join, basename } from 'path';
 import { WorktreeInfo, GitRepository, BranchInfo, BranchType } from '../types.js';
+import { GitHubUtils } from './github.js';
 
 export class GitUtils {
   static getCurrentRepo(): GitRepository | null {
@@ -95,7 +96,7 @@ export class GitUtils {
     }
   }
   
-  static listBranches(repoPath: string): BranchInfo[] {
+  static async listBranches(repoPath: string, prOnly: boolean = false): Promise<BranchInfo[]> {
     try {
       const branches: BranchInfo[] = [];
       const worktrees = this.listWorktrees(repoPath);
@@ -157,6 +158,35 @@ export class GitUtils {
         }
       } catch {
         // Remote branches might not exist, ignore error
+      }
+      
+      // Fetch PR information if requested or if we need to filter by PR
+      if (prOnly || process.env.WT_ALWAYS_SHOW_PR) {
+        const token = GitHubUtils.getGitHubToken();
+        const prPromises = branches.map(async (branch) => {
+          const prInfo = await GitHubUtils.getBranchPullRequestInfo(branch.name, repoPath, token);
+          return {
+            ...branch,
+            hasPullRequest: prInfo.hasPullRequest,
+            prNumber: prInfo.prNumber,
+            prTitle: prInfo.prTitle
+          };
+        });
+        
+        const branchesWithPR = await Promise.all(prPromises);
+        
+        // Filter by PR if requested
+        const filteredBranches = prOnly 
+          ? branchesWithPR.filter(branch => branch.hasPullRequest)
+          : branchesWithPR;
+        
+        return filteredBranches.sort((a, b) => {
+          // Sort by: local first, then by name
+          if (a.type !== b.type) {
+            return a.type === BranchType.Local ? -1 : 1;
+          }
+          return a.name.localeCompare(b.name);
+        });
       }
       
       return branches.sort((a, b) => {
