@@ -49,8 +49,11 @@ export class InteractiveSelector {
       return null;
     }
     
-    // Prepare branch list for fzf
-    const branchList = branches.map(branch => {
+    // Prepare branch list for fzf with mapping
+    const branchDisplayLines: string[] = [];
+    const branchMap = new Map<string, BranchInfo>();
+    
+    branches.forEach((branch, index) => {
       const typeColor = branch.type === BranchType.Local ? chalk.green : chalk.blue;
       const typeLabel = `[${typeColor(branch.type)}]`;
       
@@ -60,9 +63,20 @@ export class InteractiveSelector {
       }
       
       const remotePart = branch.remoteName ? chalk.gray(` ${branch.remoteName}/`) : '';
+      const displayLine = `${remotePart}${branch.name} ${typeLabel}${usageInfo}`;
       
-      return `${remotePart}${branch.name} ${typeLabel}${usageInfo}`;
-    }).join('\n');
+      branchDisplayLines.push(displayLine);
+      
+      // Create mapping from clean display line to branch object
+      // eslint-disable-next-line no-control-regex
+      const cleanLine = displayLine.replace(/\x1b\[[0-9;]*m/g, ''); // Remove ANSI codes
+      branchMap.set(cleanLine.trim(), branch);
+      
+      // Also map by index as fallback
+      branchMap.set(`INDEX_${index}`, branch);
+    });
+    
+    const branchList = branchDisplayLines.join('\n');
     
     try {
       const selectedLine = await this.runFzf(branchList, prompt);
@@ -70,24 +84,44 @@ export class InteractiveSelector {
         return null;
       }
       
-      // Extract branch name from selected line
-      // The branch name is after the remote part (if any) and before the type label
+      // First try to match by cleaned line
       // eslint-disable-next-line no-control-regex
-      const cleanLine = selectedLine.replace(/\x1b\[[0-9;]*m/g, ''); // Remove ANSI codes
-      let branchName: string;
+      const cleanSelectedLine = selectedLine.replace(/\x1b\[[0-9;]*m/g, '').trim();
+      let selectedBranch = branchMap.get(cleanSelectedLine);
       
-      if (cleanLine.includes('/')) {
-        // Remote branch: "origin/branch-name [remote]"
-        const parts = cleanLine.split(' ');
+      if (selectedBranch) {
+        return selectedBranch;
+      }
+      
+      // Fallback: find by matching line position
+      const selectedIndex = branchDisplayLines.findIndex(line => {
+        // eslint-disable-next-line no-control-regex
+        const cleanDisplayLine = line.replace(/\x1b\[[0-9;]*m/g, '').trim();
+        return cleanDisplayLine === cleanSelectedLine;
+      });
+      
+      if (selectedIndex >= 0) {
+        selectedBranch = branchMap.get(`INDEX_${selectedIndex}`);
+        if (selectedBranch) {
+          return selectedBranch;
+        }
+      }
+      
+      // Last resort: try to extract branch name manually
+      let branchName: string;
+      if (cleanSelectedLine.includes('/')) {
+        // Remote branch: " origin/branch-name [remote]"
+        const trimmed = cleanSelectedLine.trim();
+        const parts = trimmed.split(' ');
         const fullName = parts[0];
         branchName = fullName.split('/').slice(1).join('/');
       } else {
         // Local branch: "branch-name [local]"
-        branchName = cleanLine.split(' ')[0];
+        branchName = cleanSelectedLine.split(' ')[0];
       }
       
       // Find the selected branch in the original list
-      const selectedBranch = branches.find(b => b.name === branchName);
+      selectedBranch = branches.find(b => b.name === branchName);
       return selectedBranch || null;
       
     } catch (error) {

@@ -188,4 +188,155 @@ describe('InteractiveSelector.selectBranch', () => {
       expect.stringContaining('(in use: /path/to/worktree)')
     );
   });
+
+  it('should correctly extract remote branch name with leading space', async () => {
+    const branches: BranchInfo[] = [
+      {
+        name: 'feature-branch',
+        type: BranchType.Remote,
+        inUse: false,
+        isRemote: true,
+        remoteName: 'origin'
+      }
+    ];
+
+    const mockChild = {
+      stdout: { on: jest.fn((event, callback) => {
+        if (event === 'data') {
+          // Simulate fzf output with leading space (as shown in user's problem)
+          callback(' origin/feature-branch [remote]');
+        }
+      })},
+      stdin: { write: jest.fn(), end: jest.fn() },
+      on: jest.fn((event, callback) => {
+        if (event === 'close') {
+          callback(0); // Success exit code
+        }
+      })
+    };
+
+    mockSpawn.mockReturnValue(mockChild as any);
+
+    const result = await InteractiveSelector.selectBranch(branches);
+    expect(result).toMatchObject({
+      name: 'feature-branch',
+      type: BranchType.Remote,
+      inUse: false,
+      isRemote: true,
+      remoteName: 'origin'
+    });
+  });
+
+  it('should handle remote branch with complex name containing slashes', async () => {
+    const branches: BranchInfo[] = [
+      {
+        name: 'feature/user-auth/login',
+        type: BranchType.Remote,
+        inUse: false,
+        isRemote: true,
+        remoteName: 'origin'
+      }
+    ];
+
+    const mockChild = {
+      stdout: { on: jest.fn((event, callback) => {
+        if (event === 'data') {
+          callback(' origin/feature/user-auth/login [remote]');
+        }
+      })},
+      stdin: { write: jest.fn(), end: jest.fn() },
+      on: jest.fn((event, callback) => {
+        if (event === 'close') {
+          callback(0); // Success exit code
+        }
+      })
+    };
+
+    mockSpawn.mockReturnValue(mockChild as any);
+
+    const result = await InteractiveSelector.selectBranch(branches);
+    expect(result).toMatchObject({
+      name: 'feature/user-auth/login',
+      type: BranchType.Remote,
+      inUse: false,
+      isRemote: true,
+      remoteName: 'origin'
+    });
+  });
+
+  it('should handle empty branch name from malformed fzf output', async () => {
+    const branches: BranchInfo[] = [
+      {
+        name: 'main',
+        type: BranchType.Local,
+        inUse: false,
+        isRemote: false
+      }
+    ];
+
+    const mockChild = {
+      stdout: { on: jest.fn((event, callback) => {
+        if (event === 'data') {
+          // Simulate malformed output that could result in empty name
+          callback('   [local]');
+        }
+      })},
+      stdin: { write: jest.fn(), end: jest.fn() },
+      on: jest.fn((event, callback) => {
+        if (event === 'close') {
+          callback(0); // Success exit code
+        }
+      })
+    };
+
+    mockSpawn.mockReturnValue(mockChild as any);
+
+    const result = await InteractiveSelector.selectBranch(branches);
+    // Should return null when branch name cannot be extracted properly
+    expect(result).toBeNull();
+  });
+
+  it('should use mapping fallback when direct matching fails', async () => {
+    const branches: BranchInfo[] = [
+      {
+        name: 'develop',
+        type: BranchType.Local,
+        inUse: false,
+        isRemote: false
+      },
+      {
+        name: 'feature',
+        type: BranchType.Remote,
+        inUse: false,
+        isRemote: true,
+        remoteName: 'origin'
+      }
+    ];
+
+    const mockChild = {
+      stdout: { on: jest.fn((event, callback) => {
+        if (event === 'data') {
+          // Return the second item (feature branch)
+          callback(' origin/feature [remote]');
+        }
+      })},
+      stdin: { write: jest.fn(), end: jest.fn() },
+      on: jest.fn((event, callback) => {
+        if (event === 'close') {
+          callback(0); // Success exit code
+        }
+      })
+    };
+
+    mockSpawn.mockReturnValue(mockChild as any);
+
+    const result = await InteractiveSelector.selectBranch(branches);
+    expect(result).toMatchObject({
+      name: 'feature',
+      type: BranchType.Remote,
+      inUse: false,
+      isRemote: true,
+      remoteName: 'origin'
+    });
+  });
 });
