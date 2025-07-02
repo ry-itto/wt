@@ -39,7 +39,7 @@ const manager = new WorktreeManager(options);
 program
   .name('wt')
   .description('Git worktree operations wrapper with interactive interface')
-  .version('1.1.2')
+  .version('1.2.0')
   .action(async () => {
     // Default action when no subcommand is provided
     await manager.defaultAction();
