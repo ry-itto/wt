@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2025-07-02
+
+### Fixed
+- Fix fuzzy search branch name extraction in wt add command
+
+## [1.1.1] - 2025-07-02
+
+### Added
+- Implement fuzzy search for existing branches in wt add command
+
+## [1.1.0] - 2025-07-02
+
 ### Added
 - Complete TypeScript rewrite of zsh-based CLI tool
 - Interactive worktree selection with fzf integration
