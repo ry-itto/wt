@@ -33,7 +33,7 @@ export class GitHubUtils {
         owner: githubMatch[1],
         repo: githubMatch[2]
       };
-    } catch (error) {
+    } catch (_) {
       return null;
     }
   }
