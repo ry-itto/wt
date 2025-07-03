@@ -71,6 +71,7 @@ describe('InteractiveSelector', () => {
           }
         })
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockSpawn.mockReturnValue(mockChild as any);
 
       const result = await InteractiveSelector.selectWorktree(mockWorktrees, 'Select: ');
@@ -95,6 +96,7 @@ describe('InteractiveSelector', () => {
           }
         })
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockSpawn.mockReturnValue(mockChild as any);
 
       const result = await InteractiveSelector.selectWorktree(mockWorktrees, 'Select: ');
@@ -116,6 +118,7 @@ describe('InteractiveSelector', () => {
           }
         })
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockSpawn.mockReturnValue(mockChild as any);
 
       const result = await InteractiveSelector.selectWorktree(mockWorktrees, 'Select: ');
@@ -140,6 +143,7 @@ describe('InteractiveSelector', () => {
           }
         })
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mockSpawn.mockReturnValue(mockChild as any);
 
       const result = await InteractiveSelector.selectWorktree(mockWorktrees, 'Select: ');
@@ -155,10 +159,9 @@ describe('InteractiveSelector', () => {
 
   describe('selectWorktreeForRemoval', () => {
     it('should filter out main worktree', async () => {
-      const result = await InteractiveSelector.selectWorktreeForRemoval(mockWorktrees);
+      await InteractiveSelector.selectWorktreeForRemoval(mockWorktrees);
       
       // Should only call with non-main worktrees
-      const expectedWorktrees = mockWorktrees.filter(wt => !wt.isMain);
       expect(mockSpawn).toHaveBeenCalled();
     });
 

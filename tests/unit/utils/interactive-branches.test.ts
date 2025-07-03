@@ -45,6 +45,7 @@ describe('InteractiveSelector.selectBranch', () => {
       })
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockSpawn.mockReturnValue(mockChild as any);
 
     const result = await InteractiveSelector.selectBranch(branches);
@@ -81,6 +82,7 @@ describe('InteractiveSelector.selectBranch', () => {
       })
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockSpawn.mockReturnValue(mockChild as any);
 
     const result = await InteractiveSelector.selectBranch(branches);
@@ -117,6 +119,7 @@ describe('InteractiveSelector.selectBranch', () => {
       })
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockSpawn.mockReturnValue(mockChild as any);
 
     const result = await InteractiveSelector.selectBranch(branches);
@@ -151,6 +154,7 @@ describe('InteractiveSelector.selectBranch', () => {
       })
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockSpawn.mockReturnValue(mockChild as any);
 
     const result = await InteractiveSelector.selectBranch(branches);
@@ -179,6 +183,7 @@ describe('InteractiveSelector.selectBranch', () => {
       })
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockSpawn.mockReturnValue(mockChild as any);
 
     // Just verify the branch list is formatted correctly (contains usage info)
@@ -215,6 +220,7 @@ describe('InteractiveSelector.selectBranch', () => {
       })
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockSpawn.mockReturnValue(mockChild as any);
 
     const result = await InteractiveSelector.selectBranch(branches);
@@ -252,6 +258,7 @@ describe('InteractiveSelector.selectBranch', () => {
       })
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockSpawn.mockReturnValue(mockChild as any);
 
     const result = await InteractiveSelector.selectBranch(branches);
@@ -289,6 +296,7 @@ describe('InteractiveSelector.selectBranch', () => {
       })
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockSpawn.mockReturnValue(mockChild as any);
 
     const result = await InteractiveSelector.selectBranch(branches);
@@ -328,6 +336,7 @@ describe('InteractiveSelector.selectBranch', () => {
       })
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockSpawn.mockReturnValue(mockChild as any);
 
     const result = await InteractiveSelector.selectBranch(branches);

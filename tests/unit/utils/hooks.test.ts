@@ -13,7 +13,9 @@ const mockSpawn = spawn as jest.MockedFunction<typeof spawn>;
 
 describe('HookManager', () => {
   let mockContext: HookContext;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let consoleSpy: jest.SpiedFunction<typeof console.log>;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
 
   beforeEach(() => {
