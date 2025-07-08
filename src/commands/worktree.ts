@@ -2,9 +2,10 @@ import { basename, join } from 'path';
 import { writeFileSync, mkdirSync } from 'fs';
 import { tmpdir } from 'os';
 import { GitUtils } from '../utils/git.js';
+import { GitHubCLI, GitHubPRInfo } from '../utils/github-cli.js';
 import { HookManager } from '../utils/hooks.js';
 import { InteractiveSelector } from '../utils/interactive.js';
-import { WtOptions } from '../types.js';
+import { WtOptions, PrunableWorktree, PruneOptions } from '../types.js';
 import chalk from 'chalk';
 
 export class WorktreeManager {
@@ -242,6 +243,161 @@ export class WorktreeManager {
       child.on('close', (code) => {
         process.exit(code || 0);
       });
+    }
+  }
+  
+  async pruneWorktrees(options: PruneOptions = {}): Promise<void> {
+    const repo = GitUtils.getCurrentRepo();
+    if (!repo) {
+      console.error(chalk.red('Error: Not in a git repository'));
+      process.exit(1);
+    }
+    
+    console.log(chalk.blue('Fetching latest remote information...'));
+    await GitUtils.fetchRemote(repo.path);
+    
+    console.log(chalk.blue('Analyzing worktrees for pruning...'));
+    const worktrees = GitUtils.listWorktrees(repo.path);
+    const prunableWorktrees: PrunableWorktree[] = [];
+    
+    // Filter out the main worktree
+    const candidateWorktrees = worktrees.filter(wt => !wt.isMain);
+    
+    if (candidateWorktrees.length === 0) {
+      console.log(chalk.yellow('No worktrees found to prune'));
+      return;
+    }
+    
+    // Check GitHub CLI requirements for PR checks
+    const ghRequirements = await GitHubCLI.checkRequirements();
+    let canCheckPRs = ghRequirements.available && ghRequirements.authenticated;
+    
+    if (!canCheckPRs && (options.mergedOnly !== false)) {
+      if (ghRequirements.error) {
+        GitHubCLI.displayRequirementError(ghRequirements.error);
+        console.log(chalk.yellow('Falling back to branch deletion checks only...'));
+      }
+    }
+    
+    // Fetch merged PRs if GitHub CLI is available
+    let mergedPRs: GitHubPRInfo[] = [];
+    if (canCheckPRs) {
+      try {
+        console.log(chalk.blue('Fetching merged pull requests...'));
+        mergedPRs = await GitHubCLI.fetchMergedPullRequests(repo.path);
+      } catch (error) {
+        console.log(chalk.yellow(`Warning: ${error instanceof Error ? error.message : error}`));
+        canCheckPRs = false;
+      }
+    }
+    
+    // Check each worktree
+    for (const worktree of candidateWorktrees) {
+      const hasUncommittedChanges = GitUtils.hasUncommittedChanges(worktree.path);
+      
+      // Check if branch exists on remote
+      const existsOnRemote = GitUtils.branchExists(repo.path, worktree.branch, 'remote');
+      
+      if (!existsOnRemote) {
+        // Branch deleted on remote
+        prunableWorktrees.push({
+          worktree,
+          reason: 'deleted-branch',
+          hasUncommittedChanges
+        });
+      } else if (canCheckPRs && options.mergedOnly !== false) {
+        // Check if branch has a merged PR using GitHub CLI data
+        const mergedPR = await GitHubCLI.getPullRequestForBranch(worktree.branch, mergedPRs);
+        if (mergedPR && mergedPR.state === 'MERGED') {
+          prunableWorktrees.push({
+            worktree,
+            reason: 'merged-pr',
+            prNumber: mergedPR.number,
+            prTitle: mergedPR.title,
+            mergedAt: mergedPR.mergedAt || undefined,
+            hasUncommittedChanges
+          });
+        }
+      }
+    }
+    
+    if (prunableWorktrees.length === 0) {
+      console.log(chalk.green('✅ No worktrees need pruning'));
+      return;
+    }
+    
+    // Display what will be pruned
+    console.log(chalk.yellow(`\nFound ${prunableWorktrees.length} worktree(s) to prune:\n`));
+    
+    for (const prunable of prunableWorktrees) {
+      const { worktree, reason, prNumber, prTitle, mergedAt, hasUncommittedChanges } = prunable;
+      
+      console.log(chalk.bold(`• ${worktree.branch}`));
+      console.log(`  Path: ${worktree.path}`);
+      
+      if (reason === 'merged-pr') {
+        console.log(`  Reason: ${chalk.green('PR merged')} (#${prNumber}: ${prTitle})`);
+        if (mergedAt) {
+          const mergedDate = new Date(mergedAt).toLocaleDateString();
+          console.log(`  Merged: ${mergedDate}`);
+        }
+      } else {
+        console.log(`  Reason: ${chalk.red('Branch deleted on remote')}`);
+      }
+      
+      if (hasUncommittedChanges) {
+        console.log(chalk.red(`  ⚠️  Has uncommitted changes`));
+      }
+      console.log();
+    }
+    
+    if (options.dryRun) {
+      console.log(chalk.blue('Dry run mode - no changes will be made'));
+      return;
+    }
+    
+    // Confirm deletion
+    if (!options.force) {
+      const worktreesWithChanges = prunableWorktrees.filter(p => p.hasUncommittedChanges);
+      if (worktreesWithChanges.length > 0) {
+        console.log(chalk.red(`⚠️  Warning: ${worktreesWithChanges.length} worktree(s) have uncommitted changes`));
+      }
+      
+      const confirmed = await InteractiveSelector.confirmAction(
+        `Remove ${prunableWorktrees.length} worktree(s)?`
+      );
+      
+      if (!confirmed) {
+        console.log(chalk.yellow('Pruning cancelled'));
+        return;
+      }
+    }
+    
+    // Prune worktrees
+    console.log(chalk.blue('\nPruning worktrees...'));
+    let successCount = 0;
+    let failureCount = 0;
+    
+    for (const prunable of prunableWorktrees) {
+      const { worktree } = prunable;
+      console.log(chalk.gray(`Removing ${worktree.branch}...`));
+      
+      const success = await GitUtils.removeWorktree(repo.path, worktree.path);
+      if (success) {
+        successCount++;
+        console.log(chalk.green(`  ✅ Removed`));
+      } else {
+        failureCount++;
+        console.log(chalk.red(`  ❌ Failed to remove`));
+      }
+    }
+    
+    // Summary
+    console.log();
+    if (failureCount === 0) {
+      console.log(chalk.green(`✅ Successfully pruned ${successCount} worktree(s)`));
+    } else {
+      console.log(chalk.yellow(`Pruned ${successCount} worktree(s), ${failureCount} failed`));
     }
   }
 }

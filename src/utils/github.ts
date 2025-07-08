@@ -6,7 +6,9 @@ export interface GitHubPullRequest {
   head: {
     ref: string;
   };
-  state: 'open' | 'closed' | 'merged';
+  state: 'open' | 'closed';
+  merged: boolean;
+  merged_at: string | null;
 }
 
 export interface GitHubRepository {
@@ -40,7 +42,8 @@ export class GitHubUtils {
 
   public static async fetchPullRequests(
     repoInfo: GitHubRepository, 
-    token?: string
+    token?: string,
+    state: 'open' | 'closed' | 'all' = 'open'
   ): Promise<GitHubPullRequest[]> {
     const headers: Record<string, string> = {
       'Accept': 'application/vnd.github.v3+json',
@@ -52,7 +55,7 @@ export class GitHubUtils {
     }
     
     try {
-      const url = `${this.API_BASE_URL}/repos/${repoInfo.owner}/${repoInfo.repo}/pulls?state=open&per_page=100`;
+      const url = `${this.API_BASE_URL}/repos/${repoInfo.owner}/${repoInfo.repo}/pulls?state=${state}&per_page=100`;
       
       const response = await fetch(url, { headers });
       
@@ -105,6 +108,39 @@ export class GitHubUtils {
     } catch (error) {
       console.warn(`Failed to fetch PR info for branch ${branchName}:`, error instanceof Error ? error.message : error);
       return { hasPullRequest: false };
+    }
+  }
+
+  public static async fetchMergedPullRequests(
+    repoInfo: GitHubRepository,
+    token?: string
+  ): Promise<GitHubPullRequest[]> {
+    // Fetch all closed PRs (includes merged)
+    const allClosedPRs = await this.fetchPullRequests(repoInfo, token, 'closed');
+    
+    // Filter to only merged PRs
+    return allClosedPRs.filter(pr => pr.merged === true);
+  }
+
+  public static async getBranchMergedPullRequest(
+    branchName: string,
+    repoPath: string,
+    token?: string
+  ): Promise<GitHubPullRequest | null> {
+    try {
+      const repoInfo = this.extractRepositoryInfo(repoPath);
+      if (!repoInfo) {
+        return null;
+      }
+      
+      const mergedPRs = await this.fetchMergedPullRequests(repoInfo, token);
+      
+      return mergedPRs.find(pr => 
+        pr.head.ref === branchName || pr.head.ref === `origin/${branchName}`
+      ) || null;
+    } catch (error) {
+      console.warn(`Failed to fetch merged PR info for branch ${branchName}:`, error instanceof Error ? error.message : error);
+      return null;
     }
   }
 

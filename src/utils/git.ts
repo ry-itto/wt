@@ -201,11 +201,35 @@ export class GitUtils {
     }
   }
   
-  private static branchExists(repoPath: string, branch: string, type: 'local' | 'remote'): boolean {
+  static branchExists(repoPath: string, branch: string, type: 'local' | 'remote'): boolean {
     try {
       const ref = type === 'local' ? `refs/heads/${branch}` : `refs/remotes/origin/${branch}`;
       execSync(`git show-ref --verify --quiet ${ref}`, { cwd: repoPath });
       return true;
+    } catch {
+      return false;
+    }
+  }
+  
+  static hasUncommittedChanges(worktreePath: string): boolean {
+    try {
+      // Check if there are any uncommitted changes (staged or unstaged)
+      const status = execSync('git status --porcelain', {
+        cwd: worktreePath,
+        encoding: 'utf8'
+      });
+      return status.trim().length > 0;
+    } catch {
+      // If git status fails, assume there might be changes to be safe
+      return true;
+    }
+  }
+  
+  static async fetchRemote(repoPath: string): Promise<boolean> {
+    try {
+      // Fetch remote refs without downloading objects (prune deleted branches)
+      const result = await this.executeCommand(['git', 'fetch', '--prune'], repoPath);
+      return result.success;
     } catch {
       return false;
     }

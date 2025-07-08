@@ -67,6 +67,12 @@ wt add feature-branch [optional-path]
 # Remove worktree with interactive selection
 wt remove
 
+# Prune worktrees for merged PRs or deleted branches
+wt prune
+wt prune --dry-run  # Preview what would be pruned
+wt prune --force    # Skip confirmation
+wt prune --all      # Include all deleted branches, not just merged PRs
+
 # Execute command in selected worktree
 wt -- <command>
 
