@@ -13,10 +13,6 @@ const mockSpawn = spawn as jest.MockedFunction<typeof spawn>;
 
 describe('HookManager', () => {
   let mockContext: HookContext;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let consoleSpy: jest.SpiedFunction<typeof console.log>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -29,8 +25,9 @@ describe('HookManager', () => {
 
     process.env.HOME = '/home/test';
     
-    consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    // Mock console methods to avoid noise in test output
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
