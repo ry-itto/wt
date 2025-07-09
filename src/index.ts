@@ -69,6 +69,22 @@ program
   });
 
 program
+  .command('prune')
+  .description('Remove worktrees for merged pull requests or deleted branches')
+  .option('-n, --dry-run', 'Show what would be pruned without actually removing')
+  .option('-f, --force', 'Skip confirmation prompts')
+  .option('--merged-only', 'Only prune worktrees for merged PRs (default)')
+  .option('--all', 'Prune all worktrees for deleted remote branches')
+  .action(async (options: { dryRun?: boolean; force?: boolean; mergedOnly?: boolean; all?: boolean }) => {
+    await manager.pruneWorktrees({
+      dryRun: options.dryRun,
+      force: options.force,
+      mergedOnly: options.all ? false : (options.mergedOnly !== false),
+      all: options.all
+    });
+  });
+
+program
   .command('cd')
   .description('Change directory to selected worktree')
   .action(async () => {

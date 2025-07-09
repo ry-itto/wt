@@ -40,3 +40,19 @@ export interface WtOptions {
   worktreeDir?: string;
   prOnly?: boolean;
 }
+
+export interface PruneOptions {
+  dryRun?: boolean;
+  force?: boolean;
+  mergedOnly?: boolean;
+  all?: boolean;
+}
+
+export interface PrunableWorktree {
+  worktree: WorktreeInfo;
+  reason: 'merged-pr' | 'deleted-branch';
+  prNumber?: number;
+  prTitle?: string;
+  mergedAt?: string;
+  hasUncommittedChanges: boolean;
+}

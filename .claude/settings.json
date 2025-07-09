@@ -1,24 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run lint)",
+      "Bash(npm run lint:*)",
       "Bash(npm run test:*)"
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run:*)"
     ],
     "deny": [
       "Bash(curl:*)"
-    ]
-  },
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "npm run lint && npm run test"
-          }
-        ]
-      }
     ]
   }
 }
