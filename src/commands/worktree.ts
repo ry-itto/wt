@@ -163,19 +163,64 @@ export class WorktreeManager {
       return;
     }
     
+    // Find the branch name for the selected worktree
+    const selectedWorktree = worktrees.find(wt => wt.path === selectedPath);
+    const branchName = selectedWorktree?.branch || 'unknown';
+    
+    // Check worktree status before attempting removal
+    console.log(chalk.blue('🔍 Checking worktree status...'));
+    const status = await GitUtils.checkWorktreeStatus(selectedPath);
+    
+    if (status.error) {
+      console.error(chalk.red(`❌ ${status.error}`));
+      process.exit(1);
+    }
+    
+    let forceRemoval = false;
+    
+    if (status.isDirty || status.isLocked) {
+      const issues = [];
+      if (status.isDirty) issues.push('uncommitted changes');
+      if (status.isLocked) issues.push('locked');
+      
+      console.log(chalk.yellow(`⚠️  Worktree has ${issues.join(' and ')}`));
+      
+      const useForce = await InteractiveSelector.confirmAction('Force remove worktree anyway? This may result in data loss.');
+      if (!useForce) {
+        console.log(chalk.yellow('Cancelled - worktree not removed'));
+        return;
+      }
+      forceRemoval = true;
+    }
+    
     const confirmed = await InteractiveSelector.confirmAction(`Remove worktree: ${selectedPath}?`);
     if (!confirmed) {
       console.log(chalk.yellow('Cancelled'));
       return;
     }
     
-    console.log(chalk.yellow(`Removing worktree: ${selectedPath}`));
-    const success = await GitUtils.removeWorktree(repo.path, selectedPath);
+    // Execute pre-remove hooks
+    await HookManager.executePreRemoveHooks({
+      branchName,
+      worktreePath: selectedPath,
+      repoPath: repo.path
+    });
     
-    if (success) {
+    console.log(chalk.yellow(`Removing worktree: ${selectedPath}`));
+    const result = await GitUtils.removeWorktree(repo.path, selectedPath, forceRemoval);
+    
+    // Execute post-remove hooks
+    await HookManager.executePostRemoveHooks({
+      branchName,
+      worktreePath: selectedPath,
+      repoPath: repo.path,
+      success: result.success
+    });
+    
+    if (result.success) {
       console.log(chalk.green('✅ Worktree removed successfully!'));
     } else {
-      console.error(chalk.red('❌ Failed to remove worktree'));
+      console.error(chalk.red(`❌ Failed to remove worktree: ${result.error}`));
       process.exit(1);
     }
   }

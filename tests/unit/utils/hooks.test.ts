@@ -13,10 +13,6 @@ const mockSpawn = spawn as jest.MockedFunction<typeof spawn>;
 
 describe('HookManager', () => {
   let mockContext: HookContext;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let consoleSpy: jest.SpiedFunction<typeof console.log>;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -29,8 +25,9 @@ describe('HookManager', () => {
 
     process.env.HOME = '/home/test';
     
-    consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    // Mock console methods to avoid noise in test output
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -66,6 +63,47 @@ describe('HookManager', () => {
       
       const contextWithSuccess = { ...mockContext, success: true };
       await HookManager.executePostAddHooks(contextWithSuccess);
+      
+      // When no hooks exist, spawn should not be called
+      expect(mockSpawn).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('executePreRemoveHooks', () => {
+    it('should handle pre-remove hooks', async () => {
+      mockExistsSync.mockReturnValue(false);
+      
+      await HookManager.executePreRemoveHooks(mockContext);
+      
+      // When no hooks exist, spawn should not be called
+      expect(mockSpawn).not.toHaveBeenCalled();
+    });
+
+    it('should skip non-existent pre-remove hooks', async () => {
+      mockExistsSync.mockReturnValue(false);
+
+      await HookManager.executePreRemoveHooks(mockContext);
+
+      expect(mockSpawn).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('executePostRemoveHooks', () => {
+    it('should handle post-remove hooks with success flag', async () => {
+      mockExistsSync.mockReturnValue(false);
+      
+      const contextWithSuccess = { ...mockContext, success: true };
+      await HookManager.executePostRemoveHooks(contextWithSuccess);
+      
+      // When no hooks exist, spawn should not be called
+      expect(mockSpawn).not.toHaveBeenCalled();
+    });
+
+    it('should handle post-remove hooks with failure flag', async () => {
+      mockExistsSync.mockReturnValue(false);
+      
+      const contextWithFailure = { ...mockContext, success: false };
+      await HookManager.executePostRemoveHooks(contextWithFailure);
       
       // When no hooks exist, spawn should not be called
       expect(mockSpawn).not.toHaveBeenCalled();

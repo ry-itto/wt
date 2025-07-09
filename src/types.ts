@@ -29,7 +29,7 @@ export interface HookContext {
   success?: boolean;
 }
 
-export type HookType = 'pre-add' | 'post-add';
+export type HookType = 'pre-add' | 'post-add' | 'pre-remove' | 'post-remove';
 
 export interface GitRepository {
   path: string;

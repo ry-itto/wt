@@ -87,12 +87,55 @@ export class GitUtils {
     }
   }
   
-  static async removeWorktree(repoPath: string, worktreePath: string): Promise<boolean> {
+  static async checkWorktreeStatus(worktreePath: string): Promise<{ isDirty: boolean; isLocked: boolean; error?: string }> {
     try {
-      const result = await this.executeCommand(['git', 'worktree', 'remove', worktreePath], repoPath);
-      return result.success;
-    } catch {
-      return false;
+      // Check if worktree directory exists
+      if (!existsSync(worktreePath)) {
+        return { isDirty: false, isLocked: false, error: 'Worktree directory does not exist' };
+      }
+
+      // Check for uncommitted changes (dirty status)
+      try {
+        const statusResult = await this.executeCommand(['git', 'status', '--porcelain'], worktreePath);
+        const isDirty = statusResult.success && statusResult.output.trim().length > 0;
+        
+        // Check if worktree is locked
+        const lockFile = join(worktreePath, '.git', 'worktree.lock');
+        const isLocked = existsSync(lockFile);
+        
+        return { isDirty, isLocked };
+      } catch (error) {
+        return { isDirty: false, isLocked: false, error: `Failed to check status: ${error}` };
+      }
+    } catch (error) {
+      return { isDirty: false, isLocked: false, error: `Failed to access worktree: ${error}` };
+    }
+  }
+
+  static async removeWorktree(repoPath: string, worktreePath: string, force: boolean = false): Promise<{ success: boolean; error?: string }> {
+    try {
+      const command = force 
+        ? ['git', 'worktree', 'remove', '--force', worktreePath]
+        : ['git', 'worktree', 'remove', worktreePath];
+      
+      const result = await this.executeCommand(command, repoPath);
+      
+      if (!result.success) {
+        // Provide more specific error information
+        let errorMessage = result.output;
+        if (result.output.includes('uncommitted changes')) {
+          errorMessage = 'Worktree has uncommitted changes. Use force removal to proceed.';
+        } else if (result.output.includes('locked')) {
+          errorMessage = 'Worktree is locked. Use force removal to proceed.';
+        } else if (result.output.includes('is the current working directory')) {
+          errorMessage = 'Cannot remove worktree that is the current working directory.';
+        }
+        return { success: false, error: errorMessage };
+      }
+      
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: `Failed to remove worktree: ${error}` };
     }
   }
   
