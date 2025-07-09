@@ -71,4 +71,45 @@ describe('HookManager', () => {
       expect(mockSpawn).not.toHaveBeenCalled();
     });
   });
+
+  describe('executePreRemoveHooks', () => {
+    it('should handle pre-remove hooks', async () => {
+      mockExistsSync.mockReturnValue(false);
+      
+      await HookManager.executePreRemoveHooks(mockContext);
+      
+      // When no hooks exist, spawn should not be called
+      expect(mockSpawn).not.toHaveBeenCalled();
+    });
+
+    it('should skip non-existent pre-remove hooks', async () => {
+      mockExistsSync.mockReturnValue(false);
+
+      await HookManager.executePreRemoveHooks(mockContext);
+
+      expect(mockSpawn).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('executePostRemoveHooks', () => {
+    it('should handle post-remove hooks with success flag', async () => {
+      mockExistsSync.mockReturnValue(false);
+      
+      const contextWithSuccess = { ...mockContext, success: true };
+      await HookManager.executePostRemoveHooks(contextWithSuccess);
+      
+      // When no hooks exist, spawn should not be called
+      expect(mockSpawn).not.toHaveBeenCalled();
+    });
+
+    it('should handle post-remove hooks with failure flag', async () => {
+      mockExistsSync.mockReturnValue(false);
+      
+      const contextWithFailure = { ...mockContext, success: false };
+      await HookManager.executePostRemoveHooks(contextWithFailure);
+      
+      // When no hooks exist, spawn should not be called
+      expect(mockSpawn).not.toHaveBeenCalled();
+    });
+  });
 });

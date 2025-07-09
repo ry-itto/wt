@@ -13,6 +13,14 @@ export class HookManager {
     await this.executeHook('post-add', context);
   }
   
+  static async executePreRemoveHooks(context: HookContext): Promise<void> {
+    await this.executeHook('pre-remove', context);
+  }
+  
+  static async executePostRemoveHooks(context: HookContext): Promise<void> {
+    await this.executeHook('post-remove', context);
+  }
+  
   private static async executeHook(hookType: HookType, context: HookContext): Promise<void> {
     // Execute global hook
     const globalHookPath = join(process.env.HOME!, '.zsh', 'hooks', 'wt', hookType);

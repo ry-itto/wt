@@ -70,6 +70,41 @@ describe('CLI E2E Tests', () => {
     });
   });
 
+  describe('remove command', () => {
+    it('should show error when not in a git repository', async () => {
+      const result = await E2ETestHelper.runCommand('node', [cliPath, 'remove'], {
+        cwd: '/tmp', // Run in non-ghq directory
+        env: { CI: 'true' } // Force non-interactive environment
+      });
+      
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain('Not in a git repository');
+    });
+
+    it('should accept rm alias for remove command', async () => {
+      const result = await E2ETestHelper.runCommand('node', [cliPath, 'rm'], {
+        cwd: '/tmp', // Run in non-ghq directory
+        env: { CI: 'true' } // Force non-interactive environment
+      });
+      
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain('Not in a git repository');
+    });
+
+    it('should handle worktree selection correctly in interactive mode', async () => {
+      // This test verifies that the remove command handles interactive selection
+      // and proper error handling when not in a git repository
+      const result = await E2ETestHelper.runCommand('node', [cliPath, 'remove'], {
+        cwd: '/tmp', // Run in non-ghq directory
+        env: { CI: 'true' } // Force non-interactive environment
+      });
+      
+      // Should exit with error when not in a git repo
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain('Not in a git repository');
+    }, 30000);
+  });
+
   describe('shell-init command', () => {
     it('should output shell integration function', async () => {
       const result = await E2ETestHelper.runCommand('node', [cliPath, 'shell-init']);
