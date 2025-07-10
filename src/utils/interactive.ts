@@ -8,12 +8,41 @@ function isInteractiveEnvironment(): boolean {
   if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID) {
     return true;
   }
-  // For E2E tests or CI environments, check TTY and CI flags
-  // If we're in CI or have no TTY, it's not interactive
-  if (process.env.CI || !process.stdout.isTTY || !process.stdin.isTTY) {
+  
+  // If explicitly in CI environment, not interactive
+  if (process.env.CI === 'true' || process.env.CI === '1') {
     return false;
   }
-  return true;
+  
+  // Check for specific non-interactive scenarios
+  if (process.env.TERM === 'dumb' || process.env.DEBIAN_FRONTEND === 'noninteractive') {
+    return false;
+  }
+  
+  // In some environments (like certain containers or tools), isTTY may be undefined
+  // In these cases, we need to make a reasonable assumption
+  
+  // If TTY properties are undefined, check for terminal-like environment
+  if (process.stdout.isTTY === undefined && process.stdin.isTTY === undefined) {
+    // Check if we have TERM environment variable indicating a terminal
+    if (process.env.TERM && process.env.TERM !== 'dumb') {
+      return true;
+    }
+    // If no TERM, default to non-interactive for safety
+    return false;
+  }
+  
+  // If we have explicit TTY status, use it
+  const hasStdoutTTY = process.stdout.isTTY === true;
+  const hasStdinTTY = process.stdin.isTTY === true;
+  
+  // If either is a TTY, assume interactive
+  if (hasStdoutTTY || hasStdinTTY) {
+    return true;
+  }
+  
+  // If both are explicitly false, then not interactive
+  return false;
 }
 
 export class InteractiveSelector {
