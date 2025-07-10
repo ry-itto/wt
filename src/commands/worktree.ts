@@ -427,13 +427,13 @@ export class WorktreeManager {
       const { worktree } = prunable;
       console.log(chalk.gray(`Removing ${worktree.branch}...`));
       
-      const success = await GitUtils.removeWorktree(repo.path, worktree.path);
-      if (success) {
+      const result = await GitUtils.removeWorktree(repo.path, worktree.path, options.force);
+      if (result.success) {
         successCount++;
         console.log(chalk.green(`  ✅ Removed`));
       } else {
         failureCount++;
-        console.log(chalk.red(`  ❌ Failed to remove`));
+        console.log(chalk.red(`  ❌ Failed to remove: ${result.error || 'Unknown error'}`));
       }
     }
     
