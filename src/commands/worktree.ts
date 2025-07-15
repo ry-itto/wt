@@ -161,7 +161,7 @@ export class WorktreeManager {
     const selectedPath = await InteractiveSelector.selectWorktreeForRemoval(worktrees);
     
     if (!selectedPath) {
-      return;
+      process.exit(1);
     }
     
     // Find the branch name for the selected worktree

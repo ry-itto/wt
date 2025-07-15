@@ -1,13 +1,13 @@
-#!/bin/bash
+#!/bin/sh
 
 # Test list command functionality
 
 # Get the directory of this script
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Source test helpers
-source "$SCRIPT_DIR/../test-helpers.sh"
-source "$SCRIPT_DIR/../fixtures/setup-test-repo.sh"
+. "$SCRIPT_DIR/../test-helpers.sh"
+. "$SCRIPT_DIR/../fixtures/setup-test-repo.sh"
 
 # Setup
 setup_test_environment
@@ -59,7 +59,8 @@ cd "$repo_path" || exit 1
 
 output=$(run_wt list)
 # Check that each line contains both path and branch info
-line_count=$(echo "$output" | grep -c ".")
+# Filter out header line and empty lines, count only worktree lines
+line_count=$(echo "$output" | grep -E "^/" | wc -l | tr -d ' ')
 assert_equal "3" "$line_count" "Should have 3 lines for 3 worktrees"
 
 # Verify each line has expected format (path followed by branch)

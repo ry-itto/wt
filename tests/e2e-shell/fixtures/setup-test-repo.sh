@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/bin/sh
 
 # Setup script for creating test repositories with various configurations
 
-source "$(dirname "$0")/../test-helpers.sh"
+. "$(dirname "$0")/../test-helpers.sh"
 
 # Create a repository with multiple worktrees
 setup_repo_with_worktrees() {
@@ -30,6 +30,26 @@ setup_repo_with_worktrees() {
     git worktree add "$repo_path-feature-2" feature-2 >/dev/null 2>&1 || true
     
     echo "$repo_path"
+}
+
+# Helper function to create a remote branch
+create_remote_branch() {
+    local branch_name=$1
+    
+    # Create the branch
+    git checkout -b "$branch_name" --quiet 2>&1 >/dev/null
+    echo "Changes for $branch_name" > "${branch_name}.txt"
+    git add "${branch_name}.txt"
+    git commit -m "Changes for $branch_name" --quiet
+    
+    # Go back to main
+    git checkout main --quiet 2>&1 >/dev/null
+    
+    # Simulate it being a remote branch by setting up refs
+    git update-ref "refs/remotes/origin/$branch_name" "refs/heads/$branch_name"
+    
+    # Delete the local branch to simulate it only existing remotely
+    git branch -D "$branch_name" --quiet 2>&1 >/dev/null
 }
 
 # Create a repository with remote branches

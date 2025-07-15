@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 
 # Main test runner for wt e2e shell tests
 
-# Get the directory of this script
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get the directory of this script in a portable way
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Colors for output
 RED='\033[0;31m'
@@ -45,11 +45,13 @@ check_prerequisites() {
     # Check if the project is built
     if [[ ! -f "$SCRIPT_DIR/../../dist/index.js" ]]; then
         echo -e "${YELLOW}⚠ Project not built. Building now...${NC}"
-        (cd "$SCRIPT_DIR/../.." && npm run build)
+        cd "$SCRIPT_DIR/../.." || exit 1
+        npm run build
         if [[ $? -ne 0 ]]; then
             echo -e "${RED}✗ Build failed${NC}"
             exit 1
         fi
+        cd - > /dev/null || exit 1
     fi
     echo -e "${GREEN}✓ Project is built${NC}"
     

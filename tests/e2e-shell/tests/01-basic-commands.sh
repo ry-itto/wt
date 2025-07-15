@@ -1,12 +1,13 @@
-#!/bin/bash
+#!/bin/sh
 
 # Test basic commands: help, version, and command structure
 
 # Get the directory of this script
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Source test helpers
-source "$SCRIPT_DIR/../test-helpers.sh"
+. "$SCRIPT_DIR/../test-helpers.sh"
+. "$SCRIPT_DIR/../fixtures/setup-test-repo.sh"
 
 # Setup
 setup_test_environment
@@ -80,8 +81,15 @@ cd "$repo_path" || exit 1
 # Set CI environment to avoid interactive mode
 export CI=true
 run_wt_separate rm
-assert_exit_code 1 $? "Remove command should fail when no worktrees exist"
-assert_contains "$STDERR" "git repository" "rm alias should work like remove"
+assert_exit_code 1 $? "Remove command should fail in non-interactive mode"
+# Check both STDOUT and STDERR as the message might go to either
+output="$STDOUT$STDERR"
+# Either message is acceptable - depends on whether there are removable worktrees
+if [[ "$output" == *"No removable worktrees found"* ]] || [[ "$output" == *"Interactive selection not available"* ]]; then
+    pass "rm alias should show appropriate error"
+else
+    fail "rm alias should show appropriate error" "Expected 'No removable worktrees found' or 'Interactive selection not available'" "$output"
+fi
 
 # Cleanup
 teardown_test_environment

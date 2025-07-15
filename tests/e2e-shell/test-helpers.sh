@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Test helper functions for wt e2e shell tests
 
@@ -20,7 +20,13 @@ export TEST_BASE_DIR="$REAL_HOME/.wt-test-$$"
 export HOME="$TEST_BASE_DIR"
 export GHQ_ROOT="$HOME/ghq"
 # Get the root directory of the project
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# When this is sourced, SCRIPT_DIR should already be set by the calling script
+if [ -n "$SCRIPT_DIR" ]; then
+    PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+else
+    # Fallback
+    PROJECT_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+fi
 export WT_CLI_PATH="${WT_CLI_PATH:-node $PROJECT_ROOT/dist/index.js}"
 
 # Setup functions
@@ -83,7 +89,7 @@ setup_mock_fzf() {
     mkdir -p "$mock_bin"
     
     cat > "$mock_bin/fzf" << 'EOF'
-#!/bin/bash
+#!/bin/sh
 # Mock fzf for testing
 # Reads from FZF_MOCK_OUTPUT environment variable
 if [[ -n "$FZF_MOCK_OUTPUT" ]]; then
@@ -99,6 +105,25 @@ EOF
     
     chmod +x "$mock_bin/fzf"
     export PATH="$mock_bin:$PATH"
+}
+
+# Helper functions for custom pass/fail
+pass() {
+    local description="$1"
+    TESTS_RUN=$((TESTS_RUN + 1))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+    echo -e "${GREEN}✓${NC} $description"
+}
+
+fail() {
+    local description="$1"
+    local expected="$2"
+    local actual="$3"
+    TESTS_RUN=$((TESTS_RUN + 1))
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+    echo -e "${RED}✗${NC} $description"
+    echo "  Expected: '$expected'"
+    echo "  Actual:   '$actual'"
 }
 
 # Test assertion functions
@@ -222,7 +247,7 @@ run_wt() {
     local exit_code
     
     # Capture both stdout and stderr
-    output=$($WT_CLI_PATH "$@" 2>&1)
+    output=$(eval "$WT_CLI_PATH \"\$@\"" 2>&1)
     exit_code=$?
     
     echo "$output"
@@ -234,7 +259,8 @@ run_wt_separate() {
     local stdout_file="$TEST_BASE_DIR/stdout.tmp"
     local stderr_file="$TEST_BASE_DIR/stderr.tmp"
     
-    $WT_CLI_PATH "$@" >"$stdout_file" 2>"$stderr_file"
+    # Use eval to properly handle the command
+    eval "$WT_CLI_PATH \"\$@\"" >"$stdout_file" 2>"$stderr_file"
     local exit_code=$?
     
     STDOUT=$(cat "$stdout_file")
@@ -290,7 +316,7 @@ create_hook() {
     mkdir -p "$hook_dir"
     
     cat > "$hook_dir/$hook_type" << EOF
-#!/bin/bash
+#!/bin/sh
 $hook_content
 EOF
     
@@ -312,7 +338,4 @@ wait_for_file() {
 }
 
 # Initialize test environment on source
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    echo "This script should be sourced, not executed directly"
-    exit 1
-fi
+# Removed the check to allow sourcing from different shells

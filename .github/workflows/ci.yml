@@ -12,6 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     
     strategy:
+      fail-fast: false
       matrix:
         node-version: [18.x, 20.x, 22.x]
         os: [ubuntu-latest, macos-latest]
@@ -56,6 +57,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
         shell: [bash, zsh]
@@ -102,6 +104,10 @@ jobs:
     - name: Run shell E2E tests
       run: |
         export CI=true
+        if [[ "${{ matrix.shell }}" == "zsh" ]]; then
+          # For zsh, ensure we're in the right directory
+          cd $GITHUB_WORKSPACE
+        fi
         ${{ matrix.shell }} tests/e2e-shell/run-all-tests.sh
       
     - name: Upload test logs on failure
