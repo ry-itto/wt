@@ -19,6 +19,11 @@
     "test:e2e": "npm run build && jest tests/e2e",
     "test:shell": "npm run build && bash tests/e2e-shell/run-all-tests.sh",
     "test:shell:clean": "bash tests/e2e-shell/run-all-tests.sh --clean",
+    "test:docker": "bash tests/e2e-shell/run-docker-tests.sh",
+    "test:docker:all": "bash tests/e2e-shell/run-docker-tests.sh --all",
+    "test:docker:shell": "bash tests/e2e-shell/run-docker-tests.sh --shell",
+    "test:docker:clean": "bash tests/e2e-shell/run-docker-tests.sh --clean",
+    "test:container:minimal": "bash tests/e2e-shell/run-container-cli-minimal.sh",
     "test:watch": "jest --watch tests/unit",
     "test:coverage": "jest --coverage tests/unit",
     "prepare": "npm run build"

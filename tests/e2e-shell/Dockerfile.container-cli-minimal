@@ -1,0 +1,41 @@
+# Minimal Dockerfile for Apple Container CLI
+# Assumes git, fzf, and ghq will be mocked or stubbed in tests
+
+ARG NODE_VERSION=20
+FROM node:${NODE_VERSION}-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install only bash (Alpine comes with sh by default)
+RUN apk add --no-cache bash git
+
+# Copy package files first for better caching
+COPY package*.json ./
+
+# Install npm dependencies
+RUN npm ci
+
+# Copy the rest of the project files
+COPY . .
+
+# Build the project
+RUN npm run build
+
+# Set up environment variables
+ENV CI=true
+ENV NODE_ENV=test
+ENV MOCK_FZF=1
+ENV SKIP_GHQ_CHECK=1
+
+# Create a simple fzf mock
+RUN mkdir -p /usr/local/bin && \
+    echo '#!/bin/sh\nif [ -n "$FZF_MOCK_OUTPUT" ]; then\n  cat\n  echo "$FZF_MOCK_OUTPUT"\n  exit 0\nelse\n  cat >/dev/null\n  exit 130\nfi' > /usr/local/bin/fzf && \
+    chmod +x /usr/local/bin/fzf
+
+# Create a simple ghq mock
+RUN echo '#!/bin/sh\necho "github.com/test/repo"' > /usr/local/bin/ghq && \
+    chmod +x /usr/local/bin/ghq
+
+# Default command runs the e2e shell tests
+CMD ["bash", "tests/e2e-shell/run-all-tests.sh"]
