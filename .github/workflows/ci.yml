@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x, 20.x, 22.x]
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
         
     steps:
     - name: Checkout code
@@ -50,6 +50,67 @@ jobs:
         npm install --global ./ry-itto-wt-*.tgz
         wt --version
         npm uninstall --global @ry-itto/wt
+
+  shell-tests:
+    name: Shell E2E Tests on ${{ matrix.os }} with ${{ matrix.shell }}
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        shell: [bash, zsh]
+        exclude:
+          # zsh is not available by default on ubuntu runners
+          - os: ubuntu-latest
+            shell: zsh
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build project
+      run: npm run build
+      
+    - name: Install test dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        # Install fzf
+        sudo apt-get update
+        sudo apt-get install -y fzf
+        
+        # Install ghq
+        curl -sSL https://github.com/x-motemen/ghq/releases/latest/download/ghq_linux_amd64.tar.gz | sudo tar -xz -C /usr/local/bin ghq
+        
+    - name: Install test dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        # Install fzf
+        brew install fzf
+        
+        # Install ghq
+        brew install ghq
+        
+    - name: Run shell E2E tests
+      shell: ${{ matrix.shell }} {0}
+      run: |
+        export CI=true
+        ${{ matrix.shell }} tests/e2e-shell/run-all-tests.sh
+      
+    - name: Upload test logs on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: shell-test-logs-${{ matrix.os }}-${{ matrix.shell }}
+        path: tests/e2e-shell/test-output-*.log
       
   security:
     name: Security Audit

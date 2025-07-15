@@ -14,9 +14,11 @@
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
-    "test": "npm run test:unit && npm run test:e2e",
+    "test": "npm run test:unit && npm run test:e2e && npm run test:shell",
     "test:unit": "jest tests/unit",
     "test:e2e": "npm run build && jest tests/e2e",
+    "test:shell": "npm run build && bash tests/e2e-shell/run-all-tests.sh",
+    "test:shell:clean": "bash tests/e2e-shell/run-all-tests.sh --clean",
     "test:watch": "jest --watch tests/unit",
     "test:coverage": "jest --coverage tests/unit",
     "prepare": "npm run build"
