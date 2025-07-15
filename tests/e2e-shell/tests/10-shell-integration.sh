@@ -32,18 +32,23 @@ assert_contains "$output" "fi" "Should close if statements"
 
 # Test global vs local installation detection
 it "should detect global installation"
-# Simulate global installation by setting WT_CLI_PATH
-export WT_CLI_PATH="wt"
-output=$(run_wt shell-init)
+# Save current WT_CLI_PATH
+ORIGINAL_WT_CLI_PATH="$WT_CLI_PATH"
+# Run with WT_CLI_PATH set to "wt" to simulate global installation
+output=$(WT_CLI_PATH="wt" $ORIGINAL_WT_CLI_PATH shell-init 2>&1)
 assert_contains "$output" 'command wt' "Should use 'command wt' for global install"
-unset WT_CLI_PATH
+# Restore original WT_CLI_PATH
+WT_CLI_PATH="$ORIGINAL_WT_CLI_PATH"
 
 # Test with custom WT_CLI_PATH
 it "should respect WT_CLI_PATH environment variable"
-export WT_CLI_PATH="/custom/path/to/wt"
-output=$(run_wt shell-init)
+# Save current WT_CLI_PATH
+ORIGINAL_WT_CLI_PATH="$WT_CLI_PATH"
+# Run with custom WT_CLI_PATH
+output=$(WT_CLI_PATH="/custom/path/to/wt" $ORIGINAL_WT_CLI_PATH shell-init 2>&1)
 assert_contains "$output" '/custom/path/to/wt' "Should use custom CLI path"
-unset WT_CLI_PATH
+# Restore original WT_CLI_PATH
+WT_CLI_PATH="$ORIGINAL_WT_CLI_PATH"
 
 
 # Test complete function generation
