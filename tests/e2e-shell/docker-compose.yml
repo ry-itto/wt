@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # Node.js 18 test environment
+  test-node18:
+    build:
+      context: ../..
+      dockerfile: tests/e2e-shell/Dockerfile
+      args:
+        NODE_VERSION: 18
+    image: wt-test:node18
+    container_name: wt-test-node18
+    volumes:
+      # Mount source code for development (optional)
+      # - ../../src:/app/src:ro
+      # - ../../tests:/app/tests:ro
+      # Mount test output directory
+      - ./test-results/node18:/app/tests/e2e-shell/test-output
+    environment:
+      - NODE_VERSION=18
+      - CI=true
+    command: bash tests/e2e-shell/run-all-tests.sh
+
+  # Node.js 20 test environment
+  test-node20:
+    build:
+      context: ../..
+      dockerfile: tests/e2e-shell/Dockerfile
+      args:
+        NODE_VERSION: 20
+    image: wt-test:node20
+    container_name: wt-test-node20
+    volumes:
+      # - ../../src:/app/src:ro
+      # - ../../tests:/app/tests:ro
+      - ./test-results/node20:/app/tests/e2e-shell/test-output
+    environment:
+      - NODE_VERSION=20
+      - CI=true
+    command: bash tests/e2e-shell/run-all-tests.sh
+
+  # Node.js 22 test environment
+  test-node22:
+    build:
+      context: ../..
+      dockerfile: tests/e2e-shell/Dockerfile
+      args:
+        NODE_VERSION: 22
+    image: wt-test:node22
+    container_name: wt-test-node22
+    volumes:
+      # - ../../src:/app/src:ro
+      # - ../../tests:/app/tests:ro
+      - ./test-results/node22:/app/tests/e2e-shell/test-output
+    environment:
+      - NODE_VERSION=22
+      - CI=true
+    command: bash tests/e2e-shell/run-all-tests.sh
+
+  # Interactive shell for debugging
+  test-shell:
+    build:
+      context: ../..
+      dockerfile: tests/e2e-shell/Dockerfile
+      args:
+        NODE_VERSION: 20
+    image: wt-test:node20
+    container_name: wt-test-shell
+    volumes:
+      - ../../src:/app/src:ro
+      - ../../tests:/app/tests:ro
+    environment:
+      - CI=true
+    command: /bin/bash
+    stdin_open: true
+    tty: true

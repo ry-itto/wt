@@ -209,3 +209,42 @@ This project uses [Dependabot](https://docs.github.com/en/code-security/dependab
 - **No Assignees**: Dependabot PRs don't assign reviewers to reduce notification noise
 
 Dependabot configuration can be found in [`.github/dependabot.yml`](.github/dependabot.yml).
+
+### Running E2E Tests in Docker
+
+To run the e2e shell tests in an isolated Docker environment without affecting your local machine:
+
+```bash
+# Run tests with default Node.js version (20)
+npm run test:docker
+
+# Run tests with specific Node.js version
+npm run test:docker -- --node 18
+
+# Run tests with all Node.js versions (18, 20, 22)
+npm run test:docker:all
+
+# Start interactive shell for debugging
+npm run test:docker:shell
+
+# Clean up Docker images and test results
+npm run test:docker:clean
+```
+
+The Docker test environment:
+- Runs tests in isolated Ubuntu 22.04 containers
+- Supports multiple Node.js versions (18, 20, 22)
+- Installs all required dependencies (git, fzf, ghq)
+- Preserves test output in `tests/e2e-shell/test-results/`
+- Prevents any changes to your local environment
+
+### Running E2E Tests with Apple Container CLI (Experimental)
+
+[Apple's Container CLI](https://github.com/apple/container) support is experimental due to network limitations:
+
+```bash
+# Run minimal tests with mocked dependencies (no network required)
+npm run test:container:minimal
+```
+
+**Note**: Due to Container CLI's network restrictions on macOS 15, only a minimal test suite with mocked dependencies is available. For full testing, use Docker (`npm run test:docker`) or run tests locally.
