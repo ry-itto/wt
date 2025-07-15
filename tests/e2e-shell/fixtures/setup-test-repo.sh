@@ -23,11 +23,11 @@ setup_repo_with_worktrees() {
     git commit -m "Add feature 2" --quiet
     
     # Go back to main
-    git checkout main --quiet
+    git checkout main --quiet 2>&1 >/dev/null
     
     # Create worktrees
-    git worktree add "$repo_path-feature-1" feature-1 2>/dev/null || true
-    git worktree add "$repo_path-feature-2" feature-2 2>/dev/null || true
+    git worktree add "$repo_path-feature-1" feature-1 >/dev/null 2>&1 || true
+    git worktree add "$repo_path-feature-2" feature-2 >/dev/null 2>&1 || true
     
     echo "$repo_path"
 }
@@ -45,10 +45,10 @@ setup_repo_with_remote_branches() {
     create_remote_branch "remote-feature-3"
     
     # Create a local branch that tracks a remote
-    git checkout -b "local-tracking" --quiet
+    git checkout -b "local-tracking" --quiet 2>&1 >/dev/null
     git branch --set-upstream-to="origin/remote-feature-1" --quiet 2>/dev/null || true
     
-    git checkout main --quiet
+    git checkout main --quiet 2>&1 >/dev/null
     
     echo "$repo_path"
 }
@@ -62,7 +62,7 @@ setup_repo_with_uncommitted_changes() {
     
     # Create a worktree
     create_branch "work-branch"
-    git worktree add "$repo_path-work" work-branch 2>/dev/null || true
+    git worktree add "$repo_path-work" work-branch >/dev/null 2>&1 || true
     
     # Add uncommitted changes to the worktree
     cd "$repo_path-work" || return 1
@@ -126,13 +126,13 @@ setup_repo_with_prs() {
     git commit -m "Merged PR changes" --quiet
     
     # Merge it to main
-    git checkout main --quiet
-    git merge merged-pr-branch --quiet
+    git checkout main --quiet 2>&1 >/dev/null
+    git merge merged-pr-branch --quiet 2>&1 >/dev/null
     
     # Create worktrees for PR branches
-    git worktree add "$repo_path-pr-1" pr-branch-1 2>/dev/null || true
-    git worktree add "$repo_path-pr-2" pr-branch-2 2>/dev/null || true
-    git worktree add "$repo_path-merged" merged-pr-branch 2>/dev/null || true
+    git worktree add "$repo_path-pr-1" pr-branch-1 >/dev/null 2>&1 || true
+    git worktree add "$repo_path-pr-2" pr-branch-2 >/dev/null 2>&1 || true
+    git worktree add "$repo_path-merged" merged-pr-branch >/dev/null 2>&1 || true
     
     echo "$repo_path"
 }
@@ -146,7 +146,7 @@ setup_repo_with_locked_worktree() {
     
     # Create a worktree
     create_branch "locked-branch"
-    git worktree add "$repo_path-locked" locked-branch 2>/dev/null || true
+    git worktree add "$repo_path-locked" locked-branch >/dev/null 2>&1 || true
     
     # Lock the worktree
     git worktree lock "$repo_path-locked" --reason="Test lock" 2>/dev/null || {

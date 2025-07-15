@@ -59,7 +59,7 @@ cd "$repo_path" || exit 1
 
 output=$(run_wt list)
 # Check that each line contains both path and branch info
-line_count=$(echo "$output" | wc -l)
+line_count=$(echo "$output" | grep -c ".")
 assert_equal "3" "$line_count" "Should have 3 lines for 3 worktrees"
 
 # Verify each line has expected format (path followed by branch)

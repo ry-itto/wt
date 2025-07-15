@@ -99,15 +99,18 @@ it "should handle missing fzf gracefully"
 repo_path=$(setup_repo_with_worktrees "no-fzf")
 cd "$repo_path" || exit 1
 
-# Remove fzf from PATH
-PATH_BACKUP="$PATH"
-export PATH="/usr/bin:/bin"
+# Remove fzf from PATH by creating a function that fails
+fzf() {
+    echo "fzf: command not found" >&2
+    return 127
+}
+export -f fzf
 
 run_wt_separate remove
 assert_exit_code 1 $? "Should fail when fzf not available"
 assert_contains "$STDERR" "Interactive selection not available" "Should mention fzf issue"
 
-export PATH="$PATH_BACKUP"
+unset -f fzf
 
 # Test empty repository (no commits)
 it "should handle empty repository"

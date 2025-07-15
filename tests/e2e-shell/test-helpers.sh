@@ -14,17 +14,19 @@ TESTS_PASSED=0
 TESTS_FAILED=0
 
 # Test environment variables
-export TEST_BASE_DIR="/tmp/wt-test-$$"
-export GHQ_ROOT="$TEST_BASE_DIR/ghq"
-export WT_CLI_PATH="${WT_CLI_PATH:-node $PWD/dist/index.js}"
+# Create test directory under user's actual home to work with ghq structure
+export REAL_HOME="$HOME"
+export TEST_BASE_DIR="$REAL_HOME/.wt-test-$$"
+export HOME="$TEST_BASE_DIR"
+export GHQ_ROOT="$HOME/ghq"
+# Get the root directory of the project
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+export WT_CLI_PATH="${WT_CLI_PATH:-node $PROJECT_ROOT/dist/index.js}"
 
 # Setup functions
 setup_test_environment() {
     mkdir -p "$TEST_BASE_DIR"
     mkdir -p "$GHQ_ROOT"
-    
-    # Set up environment variables
-    export HOME="$TEST_BASE_DIR/home"
     mkdir -p "$HOME"
     
     # Create mock fzf if needed
@@ -37,6 +39,8 @@ teardown_test_environment() {
     if [[ -d "$TEST_BASE_DIR" ]]; then
         rm -rf "$TEST_BASE_DIR"
     fi
+    # Restore original HOME
+    export HOME="$REAL_HOME"
 }
 
 # Git repository setup
@@ -44,10 +48,10 @@ create_test_repo() {
     local repo_name="${1:-test-repo}"
     local repo_path="$GHQ_ROOT/github.com/test/$repo_name"
     
-    mkdir -p "$(dirname "$repo_path")"
+    mkdir -p "$repo_path"
     cd "$repo_path" || return 1
     
-    git init --quiet
+    git init --quiet -b main
     git config user.name "Test User"
     git config user.email "test@example.com"
     
