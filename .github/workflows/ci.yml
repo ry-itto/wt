@@ -100,7 +100,6 @@ jobs:
         brew install ghq
         
     - name: Run shell E2E tests
-      shell: ${{ matrix.shell }} {0}
       run: |
         export CI=true
         ${{ matrix.shell }} tests/e2e-shell/run-all-tests.sh
