@@ -4,6 +4,9 @@ import { Command } from 'commander';
 import { WorktreeManager } from './commands/worktree.js';
 import { WtOptions } from './types.js';
 import chalk from 'chalk';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import path from 'path';
 
 const program = new Command();
 
@@ -36,10 +39,22 @@ const getCliPath = (): string => {
 
 const manager = new WorktreeManager(options);
 
+// Resolve CLI version from package.json to avoid mismatches
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+let cliVersion = '0.0.0';
+try {
+  const pkgPath = path.resolve(__dirname, '../package.json');
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { version?: string };
+  if (pkg.version) cliVersion = pkg.version;
+} catch {
+  // ignore resolution errors; fallback stays
+}
+
 program
   .name('wt')
   .description('Git worktree operations wrapper with interactive interface')
-  .version('1.2.0')
+  .version(cliVersion)
   .action(async () => {
     // Default action when no subcommand is provided
     await manager.defaultAction();

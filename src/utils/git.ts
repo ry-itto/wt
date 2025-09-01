@@ -65,6 +65,28 @@ export class GitUtils {
   
   static async addWorktree(repoPath: string, branch: string, worktreePath: string): Promise<boolean> {
     try {
+      // If the target branch is currently checked out in the main worktree,
+      // temporarily switch to a safe base branch (e.g., main) to allow creating
+      // a new worktree for that branch. Git disallows checking out the same
+      // branch in multiple worktrees simultaneously.
+      let switchedBranch = false;
+      let previousBranch = '';
+      try {
+        previousBranch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: repoPath, encoding: 'utf8' }).trim();
+        if (previousBranch === branch) {
+          // Prefer 'main', fall back to 'master' if needed
+          const hasMain = this.branchExists(repoPath, 'main', 'local');
+          const hasMaster = this.branchExists(repoPath, 'master', 'local');
+          const targetBase = hasMain ? 'main' : (hasMaster ? 'master' : '');
+          if (targetBase) {
+            execSync(`git checkout ${targetBase} --quiet`, { cwd: repoPath });
+            switchedBranch = true;
+          }
+        }
+      } catch {
+        // ignore
+      }
+
       // Check if branch exists locally
       const localBranchExists = this.branchExists(repoPath, branch, 'local');
       // Check if branch exists remotely
@@ -81,6 +103,16 @@ export class GitUtils {
       }
       
       const result = await this.executeCommand(command, repoPath);
+
+      // Restore previous branch if we switched away
+      if (switchedBranch) {
+        try {
+          execSync(`git checkout ${previousBranch} --quiet`, { cwd: repoPath });
+        } catch {
+          // ignore
+        }
+      }
+
       return result.success;
     } catch {
       return false;
