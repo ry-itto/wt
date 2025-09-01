@@ -317,11 +317,15 @@ export class WorktreeManager {
     const ghRequirements = await GitHubCLI.checkRequirements();
     let canCheckPRs = ghRequirements.available && ghRequirements.authenticated;
     
+    // When limiting to merged PRs, we must be able to check PRs.
+    // If we cannot, abort safely instead of pruning deleted branches.
     if (!canCheckPRs && (options.mergedOnly !== false)) {
       if (ghRequirements.error) {
         GitHubCLI.displayRequirementError(ghRequirements.error);
-        console.log(chalk.yellow('Falling back to branch deletion checks only...'));
       }
+      console.log(chalk.yellow('Cannot verify merged PRs. Skipping prune to avoid removing active branches.'));
+      console.log(chalk.gray('Hint: use --all to include branches deleted on remote regardless of PR status.'));
+      return;
     }
     
     // Fetch merged PRs if GitHub CLI is available
@@ -345,11 +349,14 @@ export class WorktreeManager {
       
       if (!existsOnRemote) {
         // Branch deleted on remote
-        prunableWorktrees.push({
-          worktree,
-          reason: 'deleted-branch',
-          hasUncommittedChanges
-        });
+        // Only include deleted branches when --all is specified (mergedOnly === false)
+        if (options.mergedOnly === false) {
+          prunableWorktrees.push({
+            worktree,
+            reason: 'deleted-branch',
+            hasUncommittedChanges
+          });
+        }
       } else if (canCheckPRs && options.mergedOnly !== false) {
         // Check if branch has a merged PR using GitHub CLI data
         const mergedPR = await GitHubCLI.getPullRequestForBranch(worktree.branch, mergedPRs);
