@@ -343,22 +343,11 @@ export class WorktreeManager {
     // Check each worktree
     for (const worktree of candidateWorktrees) {
       const hasUncommittedChanges = GitUtils.hasUncommittedChanges(worktree.path);
-      
-      // Check if branch exists on remote
       const existsOnRemote = GitUtils.branchExists(repo.path, worktree.branch, 'remote');
-      
-      if (!existsOnRemote) {
-        // Branch deleted on remote
-        // Only include deleted branches when --all is specified (mergedOnly === false)
-        if (options.mergedOnly === false) {
-          prunableWorktrees.push({
-            worktree,
-            reason: 'deleted-branch',
-            hasUncommittedChanges
-          });
-        }
-      } else if (canCheckPRs && options.mergedOnly !== false) {
-        // Check if branch has a merged PR using GitHub CLI data
+
+      // If we're pruning merged PRs (default behavior) and we can check PRs,
+      // include branches with a merged PR regardless of current remote existence.
+      if (canCheckPRs && options.mergedOnly !== false) {
         const mergedPR = await GitHubCLI.getPullRequestForBranch(worktree.branch, mergedPRs);
         if (mergedPR && mergedPR.state === 'MERGED') {
           prunableWorktrees.push({
@@ -369,7 +358,17 @@ export class WorktreeManager {
             mergedAt: mergedPR.mergedAt || undefined,
             hasUncommittedChanges
           });
+          continue;
         }
+      }
+
+      // If --all is specified (mergedOnly === false), include branches deleted on remote
+      if (options.mergedOnly === false && !existsOnRemote) {
+        prunableWorktrees.push({
+          worktree,
+          reason: 'deleted-branch',
+          hasUncommittedChanges
+        });
       }
     }
     
