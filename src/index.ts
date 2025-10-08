@@ -135,14 +135,36 @@ wt() {
     if [[ -f "$switch_file" ]]; then
       local new_dir=$(cat "$switch_file" 2>/dev/null)
       rm -f "$switch_file"
-      if [[ -n "$new_dir" && -d "$new_dir" ]]; then
-        cd "$new_dir"
+      if [[ -n "$new_dir" ]]; then
+        if ! cd "$new_dir" 2>/dev/null; then
+          # cd failed - detect and report the reason
+          if [[ ! -d "$new_dir" ]]; then
+            echo "⚠️  Directory does not exist: $new_dir" >&2
+          elif [[ ! -r "$new_dir" ]]; then
+            echo "⚠️  No read permission for directory: $new_dir" >&2
+          elif [[ ! -x "$new_dir" ]]; then
+            echo "⚠️  No execute permission for directory: $new_dir" >&2
+          else
+            echo "⚠️  Failed to change directory: $new_dir" >&2
+          fi
+        fi
       fi
     elif [[ "$output" =~ WT_CD:(.+) ]]; then
       # Fallback: check for stdout marker
       local new_dir="\${BASH_REMATCH[1]}"
-      if [[ -n "$new_dir" && -d "$new_dir" ]]; then
-        cd "$new_dir"
+      if [[ -n "$new_dir" ]]; then
+        if ! cd "$new_dir" 2>/dev/null; then
+          # cd failed - detect and report the reason
+          if [[ ! -d "$new_dir" ]]; then
+            echo "⚠️  Directory does not exist: $new_dir" >&2
+          elif [[ ! -r "$new_dir" ]]; then
+            echo "⚠️  No read permission for directory: $new_dir" >&2
+          elif [[ ! -x "$new_dir" ]]; then
+            echo "⚠️  No execute permission for directory: $new_dir" >&2
+          else
+            echo "⚠️  Failed to change directory: $new_dir" >&2
+          fi
+        fi
       fi
     else
       # Show output if no directory change
@@ -159,14 +181,36 @@ wt() {
     if [[ -f "$switch_file" ]]; then
       local new_dir=$(cat "$switch_file" 2>/dev/null)
       rm -f "$switch_file"
-      if [[ -n "$new_dir" && -d "$new_dir" ]]; then
-        cd "$new_dir"
+      if [[ -n "$new_dir" ]]; then
+        if ! cd "$new_dir" 2>/dev/null; then
+          # cd failed - detect and report the reason
+          if [[ ! -d "$new_dir" ]]; then
+            echo "⚠️  Directory does not exist: $new_dir" >&2
+          elif [[ ! -r "$new_dir" ]]; then
+            echo "⚠️  No read permission for directory: $new_dir" >&2
+          elif [[ ! -x "$new_dir" ]]; then
+            echo "⚠️  No execute permission for directory: $new_dir" >&2
+          else
+            echo "⚠️  Failed to change directory: $new_dir" >&2
+          fi
+        fi
       fi
     elif [[ "$output" =~ WT_CD:(.+) ]]; then
       # Fallback: check for stdout marker
       local new_dir="\${BASH_REMATCH[1]}"
-      if [[ -n "$new_dir" && -d "$new_dir" ]]; then
-        cd "$new_dir"
+      if [[ -n "$new_dir" ]]; then
+        if ! cd "$new_dir" 2>/dev/null; then
+          # cd failed - detect and report the reason
+          if [[ ! -d "$new_dir" ]]; then
+            echo "⚠️  Directory does not exist: $new_dir" >&2
+          elif [[ ! -r "$new_dir" ]]; then
+            echo "⚠️  No read permission for directory: $new_dir" >&2
+          elif [[ ! -x "$new_dir" ]]; then
+            echo "⚠️  No execute permission for directory: $new_dir" >&2
+          else
+            echo "⚠️  Failed to change directory: $new_dir" >&2
+          fi
+        fi
       fi
     else
       # Show output if no directory change

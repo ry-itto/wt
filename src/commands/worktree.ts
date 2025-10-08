@@ -36,19 +36,47 @@ export class WorktreeManager {
   private writeCdPath(path: string): void {
     // Check for WT_SWITCH_FILE environment variable (like git-workers)
     const switchFile = process.env.WT_SWITCH_FILE;
-    
+    const debugMode = process.env.WT_DEBUG === 'true';
+
     if (switchFile) {
       // Primary method: write to file specified by shell
       try {
         writeFileSync(switchFile, path);
+
+        // Debug logging for successful write
+        if (debugMode) {
+          console.error(chalk.gray(`[DEBUG] Successfully wrote to switch file: ${switchFile}`));
+          console.error(chalk.gray(`[DEBUG] Target path: ${path}`));
+        }
       } catch (error) {
-        console.error(`Warning: Failed to write switch file: ${error}`);
+        // Extract error message
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        // Display warning message with red color
+        console.error(chalk.red(`⚠️  Failed to write switch file: ${errorMessage}`));
+        console.error(chalk.red(`Target directory: ${path}`));
+
+        // Debug logging for error details
+        if (debugMode) {
+          console.error(chalk.gray(`[DEBUG] Switch file: ${switchFile}`));
+          console.error(chalk.gray(`[DEBUG] File system error:`), error);
+          console.error(chalk.gray(`[DEBUG] Environment: WT_SWITCH_FILE=${switchFile}`));
+        }
+
         // Fallback to stdout marker
         console.log(`WT_CD:${path}`);
       }
     } else {
       // Fallback method: stdout marker for parsing by shell
       console.log(`WT_CD:${path}`);
+
+      // Warn user that shell integration may not be enabled
+      console.error(chalk.yellow('⚠️  Shell integration may not be enabled.'));
+      console.error(chalk.yellow('   To enable cd functionality, run: eval "$(wt shell-init)"'));
+
+      if (debugMode) {
+        console.error(chalk.gray(`[DEBUG] Using stdout marker method (WT_SWITCH_FILE not set)`));
+      }
     }
   }
   
