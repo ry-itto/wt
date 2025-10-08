@@ -3,6 +3,11 @@ import * as readline from 'readline';
 import { WorktreeInfo, BranchInfo, BranchType } from '../types.js';
 import chalk from 'chalk';
 
+/**
+ * インタラクティブ環境かどうかを判定
+ * TTY の有無、CI 環境、テスト環境などを考慮
+ * @returns インタラクティブ環境の場合は true
+ */
 function isInteractiveEnvironment(): boolean {
   // Allow interactive selection in unit test environment
   if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID) {
@@ -45,7 +50,16 @@ function isInteractiveEnvironment(): boolean {
   return false;
 }
 
+/**
+ * インタラクティブ選択を管理するクラス（fzf を使用）
+ */
 export class InteractiveSelector {
+  /**
+   * worktree をインタラクティブ選択
+   * @param worktrees - worktree の配列
+   * @param prompt - fzf のプロンプトメッセージ
+   * @returns 選択された worktree のパス、またはキャンセル時は null
+   */
   static async selectWorktree(worktrees: WorktreeInfo[], prompt: string = 'Select worktree: '): Promise<string | null> {
     if (worktrees.length === 0) {
       console.log(chalk.yellow('No worktrees found'));
@@ -78,6 +92,11 @@ export class InteractiveSelector {
     }
   }
   
+  /**
+   * 削除する worktree をインタラクティブ選択（メインを除く）
+   * @param worktrees - worktree の配列
+   * @returns 選択された worktree のパス、またはキャンセル時は null
+   */
   static async selectWorktreeForRemoval(worktrees: WorktreeInfo[]): Promise<string | null> {
     // Filter out main worktree for removal
     const removableWorktrees = worktrees.filter(wt => !wt.isMain);
@@ -90,6 +109,12 @@ export class InteractiveSelector {
     return this.selectWorktree(removableWorktrees, 'Select worktree to remove: ');
   }
   
+  /**
+   * ブランチをインタラクティブ選択
+   * @param branches - ブランチの配列
+   * @param prompt - fzf のプロンプトメッセージ
+   * @returns 選択されたブランチ情報、またはキャンセル時は null
+   */
   static async selectBranch(branches: BranchInfo[], prompt: string = 'Select branch: '): Promise<BranchInfo | null> {
     if (branches.length === 0) {
       console.log(chalk.yellow('No branches found'));
@@ -188,6 +213,12 @@ export class InteractiveSelector {
     }
   }
   
+  /**
+   * fzf を実行して選択結果を取得
+   * @param input - fzf に渡す入力（改行区切りの選択肢）
+   * @param prompt - fzf のプロンプトメッセージ
+   * @returns 選択された行（ANSI カラーコード除去済み）、またはキャンセル時は null
+   */
   private static async runFzf(input: string, prompt: string): Promise<string | null> {
     return new Promise((resolve, reject) => {
       const fzf = spawn('fzf', [
@@ -234,6 +265,11 @@ export class InteractiveSelector {
     });
   }
   
+  /**
+   * 確認プロンプトを表示
+   * @param message - 確認メッセージ
+   * @returns ユーザーが 'y' または 'yes' を入力した場合は true
+   */
   static async confirmAction(message: string): Promise<boolean> {
     return new Promise((resolve) => {
       const rl = readline.createInterface({

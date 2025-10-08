@@ -4,23 +4,47 @@ import { spawn } from 'child_process';
 import { HookContext, HookType } from '../types.js';
 import chalk from 'chalk';
 
+/**
+ * フックの実行を管理するクラス
+ */
 export class HookManager {
+  /**
+   * worktree 作成前のフックを実行
+   * @param context - フック実行コンテキスト
+   */
   static async executePreAddHooks(context: HookContext): Promise<void> {
     await this.executeHook('pre-add', context);
   }
   
+  /**
+   * worktree 作成後のフックを実行
+   * @param context - フック実行コンテキスト
+   */
   static async executePostAddHooks(context: HookContext): Promise<void> {
     await this.executeHook('post-add', context);
   }
   
+  /**
+   * worktree 削除前のフックを実行
+   * @param context - フック実行コンテキスト
+   */
   static async executePreRemoveHooks(context: HookContext): Promise<void> {
     await this.executeHook('pre-remove', context);
   }
   
+  /**
+   * worktree 削除後のフックを実行
+   * @param context - フック実行コンテキスト
+   */
   static async executePostRemoveHooks(context: HookContext): Promise<void> {
     await this.executeHook('post-remove', context);
   }
   
+  /**
+   * 指定されたタイプのフックを実行（グローバル & リポジトリ固有）
+   * @param hookType - フックのタイプ
+   * @param context - フック実行コンテキスト
+   */
   private static async executeHook(hookType: HookType, context: HookContext): Promise<void> {
     // Execute global hook
     const globalHookPath = join(process.env.HOME!, '.zsh', 'hooks', 'wt', hookType);
@@ -31,9 +55,15 @@ export class HookManager {
     await this.runHookScript(repoHookPath, context, 'repository-specific');
   }
   
+  /**
+   * フックスクリプトを実行
+   * @param scriptPath - スクリプトのパス
+   * @param context - フック実行コンテキスト
+   * @param type - フックのタイプ（global または repository-specific）
+   */
   private static async runHookScript(
-    scriptPath: string, 
-    context: HookContext, 
+    scriptPath: string,
+    context: HookContext,
     type: 'global' | 'repository-specific'
   ): Promise<void> {
     if (!existsSync(scriptPath)) {
@@ -67,6 +97,11 @@ export class HookManager {
     }
   }
   
+  /**
+   * スクリプトを zsh で実行
+   * @param scriptPath - スクリプトのパス
+   * @param args - スクリプトに渡す引数
+   */
   private static async executeScript(scriptPath: string, args: string[]): Promise<void> {
     return new Promise((resolve, reject) => {
       const child = spawn('zsh', [scriptPath, ...args], {

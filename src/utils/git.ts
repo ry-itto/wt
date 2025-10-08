@@ -4,7 +4,15 @@ import { join, basename } from 'path';
 import { WorktreeInfo, GitRepository, BranchInfo, BranchType } from '../types.js';
 import { GitHubUtils } from './github.js';
 
+/**
+ * Git 操作のユーティリティクラス
+ */
 export class GitUtils {
+  /**
+   * 現在のディレクトリが属する Git リポジトリの情報を取得
+   * ghq ディレクトリ構造（~/ghq/github.com/owner/repo）を前提とする
+   * @returns リポジトリ情報、または Git リポジトリ内でない場合は null
+   */
   static getCurrentRepo(): GitRepository | null {
     try {
       const currentDir = process.cwd();
@@ -31,6 +39,11 @@ export class GitUtils {
     }
   }
   
+  /**
+   * リポジトリ内のすべての worktree を一覧取得
+   * @param repoPath - リポジトリのパス
+   * @returns worktree 情報の配列
+   */
   static listWorktrees(repoPath: string): WorktreeInfo[] {
     try {
       const output = execSync('git worktree list --porcelain', {
@@ -63,6 +76,14 @@ export class GitUtils {
     }
   }
   
+  /**
+   * 新しい worktree を作成
+   * ローカルブランチ、リモートブランチ、新規ブランチに対応
+   * @param repoPath - リポジトリのパス
+   * @param branch - ブランチ名
+   * @param worktreePath - worktree を作成するパス
+   * @returns 成功した場合は true
+   */
   static async addWorktree(repoPath: string, branch: string, worktreePath: string): Promise<boolean> {
     try {
       // If the target branch is currently checked out in the main worktree,
@@ -119,6 +140,11 @@ export class GitUtils {
     }
   }
   
+  /**
+   * worktree の状態をチェック
+   * @param worktreePath - worktree のパス
+   * @returns isDirty（未コミット変更あり）、isLocked（ロック状態）、error（エラーメッセージ）
+   */
   static async checkWorktreeStatus(worktreePath: string): Promise<{ isDirty: boolean; isLocked: boolean; error?: string }> {
     try {
       // Check if worktree directory exists
@@ -144,6 +170,13 @@ export class GitUtils {
     }
   }
 
+  /**
+   * worktree を削除
+   * @param repoPath - リポジトリのパス
+   * @param worktreePath - 削除する worktree のパス
+   * @param force - 強制削除フラグ（未コミット変更やロック状態を無視）
+   * @returns success（成功フラグ）、error（エラーメッセージ）
+   */
   static async removeWorktree(repoPath: string, worktreePath: string, force: boolean = false): Promise<{ success: boolean; error?: string }> {
     try {
       const command = force 
@@ -171,6 +204,12 @@ export class GitUtils {
     }
   }
   
+  /**
+   * リポジトリ内のブランチ一覧を取得（ローカル & リモート）
+   * @param repoPath - リポジトリのパス
+   * @param prOnly - PR があるブランチのみを返すか
+   * @returns ブランチ情報の配列
+   */
   static async listBranches(repoPath: string, prOnly: boolean = false): Promise<BranchInfo[]> {
     try {
       const branches: BranchInfo[] = [];
@@ -276,6 +315,13 @@ export class GitUtils {
     }
   }
   
+  /**
+   * ブランチが存在するかチェック
+   * @param repoPath - リポジトリのパス
+   * @param branch - ブランチ名
+   * @param type - ブランチのタイプ（local または remote）
+   * @returns ブランチが存在する場合は true
+   */
   static branchExists(repoPath: string, branch: string, type: 'local' | 'remote'): boolean {
     try {
       const ref = type === 'local' ? `refs/heads/${branch}` : `refs/remotes/origin/${branch}`;
@@ -286,6 +332,11 @@ export class GitUtils {
     }
   }
   
+  /**
+   * worktree に未コミット変更があるかチェック
+   * @param worktreePath - worktree のパス
+   * @returns 未コミット変更がある場合は true
+   */
   static hasUncommittedChanges(worktreePath: string): boolean {
     try {
       // Check if there are any uncommitted changes (staged or unstaged)
@@ -300,6 +351,11 @@ export class GitUtils {
     }
   }
   
+  /**
+   * リモートの情報を取得（削除されたブランチの参照も更新）
+   * @param repoPath - リポジトリのパス
+   * @returns 成功した場合は true
+   */
   static async fetchRemote(repoPath: string): Promise<boolean> {
     try {
       // Fetch remote refs without downloading objects (prune deleted branches)
@@ -310,6 +366,12 @@ export class GitUtils {
     }
   }
   
+  /**
+   * Git コマンドを実行
+   * @param command - コマンドと引数の配列
+   * @param cwd - 作業ディレクトリ
+   * @returns success（成功フラグ）、output（標準出力と標準エラー出力）
+   */
   private static async executeCommand(command: string[], cwd: string): Promise<{ success: boolean; output: string }> {
     return new Promise((resolve) => {
       const child = spawn(command[0], command.slice(1), { cwd, stdio: 'pipe' });

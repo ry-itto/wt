@@ -8,9 +8,16 @@ import { InteractiveSelector } from '../utils/interactive.js';
 import { WtOptions, PrunableWorktree, PruneOptions } from '../types.js';
 import chalk from 'chalk';
 
+/**
+ * worktree 操作を管理するクラス
+ */
 export class WorktreeManager {
   constructor(private options: WtOptions = {}) {}
 
+  /**
+   * wt 専用の一時ディレクトリを取得
+   * @returns 一時ディレクトリのパス
+   */
   private getWtTmpDir(): string {
     const wtTmpDir = join(tmpdir(), 'wt');
     try {
@@ -21,6 +28,11 @@ export class WorktreeManager {
     return wtTmpDir;
   }
 
+  /**
+   * シェル統合用にディレクトリパスを書き込む
+   * 環境変数メソッド（推奨）または stdout マーカーメソッド（フォールバック）を使用
+   * @param path - 移動先のディレクトリパス
+   */
   private writeCdPath(path: string): void {
     // Check for WT_SWITCH_FILE environment variable (like git-workers)
     const switchFile = process.env.WT_SWITCH_FILE;
@@ -40,6 +52,9 @@ export class WorktreeManager {
     }
   }
   
+  /**
+   * 現在のリポジトリの worktree 一覧を表示
+   */
   async listWorktrees(): Promise<void> {
     const repo = GitUtils.getCurrentRepo();
     if (!repo) {
@@ -61,6 +76,12 @@ export class WorktreeManager {
     });
   }
   
+  /**
+   * 新しい worktree を作成
+   * @param branch - ブランチ名（指定なしの場合はインタラクティブ選択）
+   * @param path - worktree を作成するパス（オプション）
+   * @param prOnly - PR があるブランチのみ表示するか
+   */
   async addWorktree(branch?: string, path?: string, prOnly?: boolean): Promise<void> {
     const repo = GitUtils.getCurrentRepo();
     if (!repo) {
@@ -150,6 +171,9 @@ export class WorktreeManager {
     }
   }
   
+  /**
+   * worktree を削除（インタラクティブ選択）
+   */
   async removeWorktree(): Promise<void> {
     const repo = GitUtils.getCurrentRepo();
     if (!repo) {
@@ -226,6 +250,11 @@ export class WorktreeManager {
     }
   }
   
+  /**
+   * worktree をインタラクティブ選択
+   * @param purpose - 選択の目的（cd または command）
+   * @returns 選択された worktree のパス、またはキャンセル時は null
+   */
   async selectWorktree(purpose: 'cd' | 'command'): Promise<string | null> {
     const repo = GitUtils.getCurrentRepo();
     if (!repo) {
@@ -242,6 +271,9 @@ export class WorktreeManager {
     return InteractiveSelector.selectWorktree(worktrees, promptMap[purpose]);
   }
   
+  /**
+   * 選択した worktree にディレクトリ変更
+   */
   async changeDirectory(): Promise<void> {
     const selectedPath = await this.selectWorktree('cd');
     if (selectedPath) {
@@ -249,6 +281,9 @@ export class WorktreeManager {
     }
   }
   
+  /**
+   * デフォルトアクション（worktree 選択 & cd）
+   */
   async defaultAction(): Promise<void> {
     const selectedPath = await this.selectWorktree('cd');
     if (selectedPath) {
@@ -256,10 +291,18 @@ export class WorktreeManager {
     }
   }
 
+  /**
+   * シェル統合用の worktree 選択
+   * @returns 選択された worktree のパス、またはキャンセル時は null
+   */
   async selectForShell(): Promise<string | null> {
     return await this.selectWorktree('cd');
   }
   
+  /**
+   * 選択した worktree でコマンドを実行
+   * @param command - 実行するコマンドと引数の配列
+   */
   async executeInWorktree(command: string[]): Promise<void> {
     const selectedPath = await this.selectWorktree('command');
     if (selectedPath) {
@@ -277,6 +320,10 @@ export class WorktreeManager {
     }
   }
   
+  /**
+   * 選択した worktree のパスをコマンド引数として実行
+   * @param command - 実行するコマンドと引数の配列
+   */
   async executeWithWorktree(command: string[]): Promise<void> {
     const selectedPath = await this.selectWorktree('command');
     if (selectedPath) {
@@ -291,6 +338,10 @@ export class WorktreeManager {
     }
   }
   
+  /**
+   * マージ済み PR や削除されたブランチの worktree を削除
+   * @param options - prune オプション
+   */
   async pruneWorktrees(options: PruneOptions = {}): Promise<void> {
     const repo = GitUtils.getCurrentRepo();
     if (!repo) {
