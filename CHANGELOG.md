@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2025-10-08
+
+### Added
+- Detailed cd failure warning messages with specific error reasons (directory not found, permission denied, etc.)
+- Debug mode support via WT_DEBUG environment variable
+- Shell integration status warnings when WT_SWITCH_FILE is not set
+
+### Changed
+- Improved error handling in shell integration functions
+- Enhanced error messages with colored output using chalk
+
+### Fixed
+- Test suite type errors in worktree cd error tests
+
 ## [1.1.2] - 2025-07-02
 
 ### Fixed
