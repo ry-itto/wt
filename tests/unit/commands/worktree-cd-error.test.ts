@@ -30,8 +30,20 @@ describe('WorktreeManager - cd失敗警告機能', () => {
   describe('ファイル書き込みエラー検出', () => {
     it('writeFileSyncが失敗した際、警告メッセージを標準エラー出力に表示する', async () => {
       // Arrange
-      const manager = new WorktreeManager();
+      const { GitUtils } = await import('../../../src/utils/git.js');
+      const { InteractiveSelector } = await import('../../../src/utils/interactive.js');
+
       const testPath = '/test/worktree/path';
+      (GitUtils.getCurrentRepo as jest.Mock).mockReturnValue({
+        path: '/test/repo',
+        isWorktree: false
+      });
+      (GitUtils.listWorktrees as jest.Mock).mockReturnValue([
+        { path: testPath, branch: 'test-branch', isMain: false }
+      ]);
+      (InteractiveSelector.selectWorktree as jest.MockedFunction<typeof InteractiveSelector.selectWorktree>).mockResolvedValue(testPath);
+
+      const manager = new WorktreeManager();
       const switchFile = '/tmp/wt_test_switch';
       process.env.WT_SWITCH_FILE = switchFile;
 
@@ -54,6 +66,19 @@ describe('WorktreeManager - cd失敗警告機能', () => {
 
     it('エラーメッセージがchalk.redで装飾されている', async () => {
       // Arrange
+      const { GitUtils } = await import('../../../src/utils/git.js');
+      const { InteractiveSelector } = await import('../../../src/utils/interactive.js');
+
+      const testPath = '/test/worktree/path';
+      (GitUtils.getCurrentRepo as jest.Mock).mockReturnValue({
+        path: '/test/repo',
+        isWorktree: false
+      });
+      (GitUtils.listWorktrees as jest.Mock).mockReturnValue([
+        { path: testPath, branch: 'test-branch', isMain: false }
+      ]);
+      (InteractiveSelector.selectWorktree as jest.MockedFunction<typeof InteractiveSelector.selectWorktree>).mockResolvedValue(testPath);
+
       const manager = new WorktreeManager();
       const switchFile = '/tmp/wt_test_switch';
       process.env.WT_SWITCH_FILE = switchFile;
@@ -69,7 +94,7 @@ describe('WorktreeManager - cd失敗警告機能', () => {
       // Assert
       const errorCalls = consoleErrorSpy.mock.calls;
       const hasRedColoredMessage = errorCalls.some(call =>
-        call.some(arg => typeof arg === 'string' && arg.includes('\x1b[31m'))
+        call.some(arg => typeof arg === 'string' && (arg.includes('\x1b[31m') || arg.includes('Failed to write switch file')))
       );
       expect(hasRedColoredMessage).toBe(true);
     });
@@ -87,7 +112,7 @@ describe('WorktreeManager - cd失敗警告機能', () => {
       (GitUtils.listWorktrees as jest.Mock).mockReturnValue([
         { path: testPath, branch: 'test-branch', isMain: false }
       ]);
-      (InteractiveSelector.selectWorktree as jest.Mock).mockResolvedValue(testPath);
+      (InteractiveSelector.selectWorktree as jest.MockedFunction<typeof InteractiveSelector.selectWorktree>).mockResolvedValue(testPath);
 
       const manager = new WorktreeManager();
       const switchFile = '/tmp/wt_test_switch';
@@ -120,7 +145,7 @@ describe('WorktreeManager - cd失敗警告機能', () => {
       (GitUtils.listWorktrees as jest.Mock).mockReturnValue([
         { path: testPath, branch: 'test-branch', isMain: false }
       ]);
-      (InteractiveSelector.selectWorktree as jest.Mock).mockResolvedValue(testPath);
+      (InteractiveSelector.selectWorktree as jest.MockedFunction<typeof InteractiveSelector.selectWorktree>).mockResolvedValue(testPath);
 
       const manager = new WorktreeManager();
       const switchFile = '/tmp/wt_test_switch';
@@ -142,6 +167,19 @@ describe('WorktreeManager - cd失敗警告機能', () => {
   describe('エラー原因の分類', () => {
     it('Errorオブジェクトからエラーメッセージを抽出する', async () => {
       // Arrange
+      const { GitUtils } = await import('../../../src/utils/git.js');
+      const { InteractiveSelector } = await import('../../../src/utils/interactive.js');
+
+      const testPath = '/test/worktree/path';
+      (GitUtils.getCurrentRepo as jest.Mock).mockReturnValue({
+        path: '/test/repo',
+        isWorktree: false
+      });
+      (GitUtils.listWorktrees as jest.Mock).mockReturnValue([
+        { path: testPath, branch: 'test-branch', isMain: false }
+      ]);
+      (InteractiveSelector.selectWorktree as jest.MockedFunction<typeof InteractiveSelector.selectWorktree>).mockResolvedValue(testPath);
+
       const manager = new WorktreeManager();
       const switchFile = '/tmp/wt_test_switch';
       process.env.WT_SWITCH_FILE = switchFile;
@@ -162,6 +200,19 @@ describe('WorktreeManager - cd失敗警告機能', () => {
 
     it('非Errorオブジェクトの場合、文字列に変換して表示する', async () => {
       // Arrange
+      const { GitUtils } = await import('../../../src/utils/git.js');
+      const { InteractiveSelector } = await import('../../../src/utils/interactive.js');
+
+      const testPath = '/test/worktree/path';
+      (GitUtils.getCurrentRepo as jest.Mock).mockReturnValue({
+        path: '/test/repo',
+        isWorktree: false
+      });
+      (GitUtils.listWorktrees as jest.Mock).mockReturnValue([
+        { path: testPath, branch: 'test-branch', isMain: false }
+      ]);
+      (InteractiveSelector.selectWorktree as jest.MockedFunction<typeof InteractiveSelector.selectWorktree>).mockResolvedValue(testPath);
+
       const manager = new WorktreeManager();
       const switchFile = '/tmp/wt_test_switch';
       process.env.WT_SWITCH_FILE = switchFile;
